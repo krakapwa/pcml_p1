@@ -92,3 +92,22 @@ def least_squares_inv(y,x):
     w = np.dot(factor,y)
 
     return
+
+def least_squares_inv_ridge(y,phi_tilda,lambda_):
+    """
+    Estimate parameters of regularized (ridge/L2-norm) system using matrix inversion
+    In: x (NxD): Input matrix
+        y (Nx1): Output vector
+        lambda_: regularization parameter
+    Where N and D are respectively the number of samples and dimension of input vectors
+    Out: Estimated parameters
+    """
+
+    shape_phi = phi_tilda.shape
+    N = shape_phi[1]
+    lambda_p = lambda_*2*N
+    left_term = np.linalg.inv(np.dot(phi_tilda.transpose(),phi_tilda) + lambda_p*np.identity(shape_phi[1]))
+    left_term = np.dot(left_term,phi_tilda.transpose())
+    w = np.dot(left_term,y)
+
+    return w

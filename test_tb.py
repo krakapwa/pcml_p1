@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import mltb as tb
 
+lambda_ = 1
 nb_samples = 100
 sig_noise = 3
 x = np.linspace(0,1,nb_samples)
@@ -28,5 +29,10 @@ print w_estimate[-1]
 
 w_estimate = tb.least_squares_inv(y,x.transpose())
 print "Closed-form (normal) equations: True vs. estimate"
+print w
+print w_estimate
+
+w_estimate = tb.least_squares_inv_ridge(y,x.transpose(),lambda_)
+print "Closed-form (normal) equations regularized: True vs. estimate"
 print w
 print w_estimate
