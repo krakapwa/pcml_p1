@@ -1,8 +1,25 @@
 import numpy as np
+import helpers as hp
+
+def mse(y_true,y_estim):
+    """
+    Computes the mean squared error between two outputs
+        y_true (Nx1): Output vector (True values)
+        y_estim (Nx1): Output vector (Estimated values)
+    Where N is the number of samples 
+    Out: MSE value
+    """
+
+    N = x.shape[0] #Number of samples
+    e = y_true - y_estim
+    e_squared = e**2
+    mse = (1./(2*N))*np.sum(e_squared)
+
+    return mse
 
 def mse_lin(y,x,w):
     """
-    Computes the mean squared error.
+    Computes the mean squared error of a linear system.
     In: x (DxN): Input matrix
         y (Nx1): Output vector
         w (Dx1): Weight vector
@@ -43,7 +60,7 @@ def least_squares_GD(y,x,gamma,max_iters,init_guess = None):
         nb_iter+=1
         w.append(w[-1] - gamma*comp_ls_gradient(N,x,y-np.dot(x,w[-1])))
 
-    return w
+    return w[-1]
 
 def least_squares_SGD(y,x,gamma,max_iters,B=1,init_guess = None):
     """
@@ -66,15 +83,10 @@ def least_squares_SGD(y,x,gamma,max_iters,B=1,init_guess = None):
     w = list()
     w.append(init_guess)
 
-    nb_iter = 0
-    while(nb_iter<max_iters):
-        this_samples = np.random.randint(0,N-1,B)
-        this_x = x[this_samples,:]
-        this_y = y[this_samples]
-        nb_iter+=1
-        w.append(w[-1] - gamma*comp_ls_gradient(N,this_x,this_y-np.dot(this_x,w[-1])))
+    for minibatch_y, minibatch_x in hp.batch_iter(y, x, B, num_batches=max_iters, shuffle=True):
+        w.append(w[-1] - gamma*comp_ls_gradient(N,minibatch_x,minibatch_y-np.dot(minibatch_x,w[-1])))
 
-    return w
+    return w[-1]
 
 def least_squares_inv(y,x):
     """

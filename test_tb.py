@@ -4,7 +4,7 @@ import mltb as tb
 
 lambda_ = 1
 nb_samples = 100
-sig_noise = 3
+sig_noise = 0.5
 x = np.linspace(0,1,nb_samples)
 x.shape = (1,nb_samples)
 x = np.append(np.ones((1,100)),x,axis=0)
@@ -20,12 +20,12 @@ mse = tb.mse_lin(y,x,w)
 w_estimate = tb.least_squares_GD(y,x.transpose(),0.5,1000)
 print "Gradient descent: True vs. estimate"
 print w
-print w_estimate[-1]
+print w_estimate
 
-w_estimate = tb.least_squares_SGD(y,x.transpose(),0.5,1000,B=nb_samples/4)
+w_estimate = tb.least_squares_SGD(y,x.transpose(),2,30000,B=nb_samples/4)
 print "Stochastic gradient descent: True vs. estimate"
 print w
-print w_estimate[-1]
+print w_estimate
 
 w_estimate = tb.least_squares_inv(y,x.transpose())
 print "Closed-form (normal) equations: True vs. estimate"
