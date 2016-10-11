@@ -36,6 +36,7 @@ def mse_lin(y,x,w):
 
 def comp_ls_gradient(N,x,e): return (-1./N)*np.dot(x.transpose(),e)
 
+
 def least_squares_GD(y,x,gamma,max_iters,init_guess = None):
     """
     Estimate parameters of linear system using least squares gradient descent.
@@ -123,3 +124,80 @@ def least_squares_inv_ridge(y,phi_tilda,lambda_):
     w = np.dot(left_term,y)
 
     return w
+
+def comp_p_x_beta_logit(beta,x):
+    """
+    Computes the probability values 1/(1+exp(-(beta[0] + beta[1:]*x)))
+    In: x (NxD+1): Input matrix
+        beta (D+1 x 1): Parameter vector
+    Where N and D are respectively the number of samples and dimension of input vectors
+    Out: Probability values (Nx1)
+    """
+
+    tbeta = beta.transpose()
+    tx = x.transpose()
+    denominator = 1 + np.exp(-np.dot(tbeta,tx))
+
+    return np.ravel(1/denominator)
+
+def comp_grad_logit(beta,x,y):
+    """
+    Computes the gradient of the logistic regression cost function
+    In: x (NxD+1): Input matrix
+        beta (D+1 x 1): Parameter vector
+        y (N x 1): Output vector
+    Where N and D are respectively the number of samples and dimension of input vectors
+    Out: Gradient (Dx1)
+    """
+
+    tx = x.transpose()
+
+    probs = comp_p_x_beta_logit(beta,x)
+    y.shape = (y.shape[0],1)
+    probs.shape = (probs.shape[0],1)
+    y_minus_p = y - probs
+    grad = np.dot(tx,y_minus_p)
+
+    return grad
+
+def logit_GD(y,x,gamma,max_iters,init_guess = None):
+    """
+    Estimate parameters of logistic regression using gradient descent.
+    In: x (NxD): Input matrix
+        y (Nx1): Output vector
+        init_guess (Dx1): Initial guess
+        gamma: step_size
+        max_iters: Max number of iterations
+    Where N and D are respectively the number of samples and dimension of input vectors
+    Out: Estimated parameters
+    """
+
+    if(init_guess == None):
+        init_guess = np.zeros((x.shape[1],1))
+    else:
+        init_guess.shape = (init_guess.shape[0],1)
+
+    N = x.shape[0]
+    w = list()
+    w.append(init_guess)
+
+    nb_iter = 0
+    while(nb_iter<max_iters):
+        nb_iter+=1
+        w.append(w[-1] - gamma*comp_grad_logit(w[-1],x,y))
+
+    return w[-1]
+
+def thr_probs(probs,thr):
+    """
+    Thresholds the values of probs s.t. probs>=thr gives 1 and probs<thr gives 0
+    In: probs (Nx1): Input matrix
+        thr: Threshold value
+    Out: Classes
+    """
+
+    classes = np.zeros(probs.shape)
+    ind_sup = np.where(probs >= thr)
+    classes[ind_sup] = 1
+
+    return classes
