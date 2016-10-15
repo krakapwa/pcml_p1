@@ -49,19 +49,23 @@ def least_squares_GD(y,x,gamma,max_iters,init_guess = None):
     Out: Estimated parameters
     """
 
-    if(init_guess == None):
+    if(init_guess is None):
         init_guess = np.zeros((x.shape[1],1))
 
     N = x.shape[0]
-    w = list()
-    w.append(init_guess)
+    #w = list()
+    w = init_guess
+    w.shape = (w.shape[0],1)
+
+    y = y.ravel()
+    y.shape = (y.shape[0],1)
 
     nb_iter = 0
     while(nb_iter<max_iters):
         nb_iter+=1
-        w.append(w[-1] - gamma*comp_ls_gradient(N,x,y-np.dot(x,w[-1])))
+        w = w - gamma*comp_ls_gradient(N,x,y-np.dot(x,w))
 
-    return w[-1]
+    return w
 
 def least_squares_SGD(y,x,gamma,max_iters,B=1,init_guess = None):
     """
@@ -76,18 +80,18 @@ def least_squares_SGD(y,x,gamma,max_iters,B=1,init_guess = None):
     Out: Estimated parameters
     """
 
-    if(init_guess == None):
+    if(init_guess is None):
         init_guess = np.zeros((x.shape[1],1))
 
 
     N = x.shape[0]
     w = list()
-    w.append(init_guess)
+    w = init_guess
 
     for minibatch_y, minibatch_x in hp.batch_iter(y, x, B, num_batches=max_iters, shuffle=True):
-        w.append(w[-1] - gamma*comp_ls_gradient(N,minibatch_x,minibatch_y-np.dot(minibatch_x,w[-1])))
+        w = w - gamma*comp_ls_gradient(N,minibatch_x,minibatch_y-np.dot(minibatch_x,w[-1]))
 
-    return w[-1]
+    return w
 
 def least_squares_inv(y,x):
     """
@@ -125,9 +129,10 @@ def least_squares_inv_ridge(y,phi_tilda,lambda_):
 
     return w
 
-def comp_p_x_beta_logit(beta,x):
+def logit(beta,x):
     """
     Computes the probability values 1/(1+exp(-(beta[0] + beta[1:]*x)))
+    Note: This function is safe for high values of tx*beta, values are replaced.
     In: x (NxD+1): Input matrix
         beta (D+1 x 1): Parameter vector
     Where N and D are respectively the number of samples and dimension of input vectors
@@ -136,9 +141,12 @@ def comp_p_x_beta_logit(beta,x):
 
     tbeta = beta.transpose()
     tx = x.transpose()
-    denominator = 1 + np.exp(-np.dot(tbeta,tx))
+    the_exp = np.exp(-np.dot(tbeta,tx))
+    ind_inf = np.isinf(the_exp)
+    res = 1/(1 + np.exp(-np.dot(tbeta,tx)))
+    res[ind_inf] = 0.0
 
-    return np.ravel(1/denominator)
+    return np.ravel(res)
 
 def comp_grad_logit(beta,x,y):
     """
@@ -152,7 +160,7 @@ def comp_grad_logit(beta,x,y):
 
     tx = x.transpose()
 
-    probs = comp_p_x_beta_logit(beta,x)
+    probs = logit(beta,x)
     y.shape = (y.shape[0],1)
     probs.shape = (probs.shape[0],1)
     y_minus_p = y - probs
@@ -172,21 +180,51 @@ def logit_GD(y,x,gamma,max_iters,init_guess = None):
     Out: Estimated parameters
     """
 
-    if(init_guess == None):
+    if(init_guess is None):
         init_guess = np.zeros((x.shape[1],1))
     else:
         init_guess.shape = (init_guess.shape[0],1)
 
     N = x.shape[0]
     w = list()
-    w.append(init_guess)
+    w = init_guess
+
+    import pdb; pdb.set_trace()
+    nb_iter = 0
+    while(nb_iter<max_iters):
+        nb_iter+=1
+        w = w - gamma*comp_grad_logit(w,x,y)
+
+    return w
+
+def logit_GD_ridge(y,x,gamma,lambda_,max_iters,init_guess = None):
+    """
+    Estimate parameters of logistic regression using gradient descent.
+    In: x (NxD): Input matrix
+        y (Nx1): Output vector
+        lambda_: regularization parameter
+        init_guess (Dx1): Initial guess
+        gamma: step_size
+        max_iters: Max number of iterations
+    Where N and D are respectively the number of samples and dimension of input vectors
+    Out: Estimated parameters
+    """
+
+    if(init_guess == None):
+        init_guess = np.zeros((x.shape[1],1))
+    else:
+        init_guess.shape = (init_guess.shape[0],1)
+
+    w = init_guess
+
+    N = x.shape[0]
 
     nb_iter = 0
     while(nb_iter<max_iters):
         nb_iter+=1
-        w.append(w[-1] - gamma*comp_grad_logit(w[-1],x,y))
+        w = w - gamma*(comp_grad_logit(w,x,y)+ 2*lambda_*w)
 
-    return w[-1]
+    return w
 
 def thr_probs(probs,thr):
     """
@@ -201,3 +239,25 @@ def thr_probs(probs,thr):
     classes[ind_sup] = 1
 
     return classes
+
+def binary_tpr_fpr(y_true,y_pred):
+    """
+    Computes the true/false positive rates. y_true must be either +1 or -1
+    In: y_true (Nx1): Training values
+        y_pred (Nx1): Predicted values
+    Out: True/False positives rates
+    """
+
+    positives = np.where(y_true == 1)
+    negatives = np.where(y_true == -1)
+    true_pos = np.where(y_pred[positives[0]] == 1)[0].shape[0]
+    false_pos = np.where(y_pred[negatives[0]] == 1)[0].shape[0]
+    true_neg = np.where(y_pred[negatives[0]] == -1)[0].shape[0]
+    false_neg = np.where(y_pred[positives[0]] == -1)[0].shape[0]
+
+    tpr = true_pos/(true_pos + false_neg)
+    fpr = false_pos/(false_pos + true_neg)
+
+    return tpr,fpr
+
+

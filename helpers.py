@@ -8,13 +8,17 @@ def load_data_higgs(path_dataset):
     data = np.genfromtxt(
         path_dataset, delimiter=",", skip_header=1)
     data = np.delete(data,col_pred,axis=1)
+    data = np.delete(data,0,axis=1)
 
     #Read character of class 's' or 'b'
     y = np.genfromtxt(
         path_dataset, delimiter=",",dtype="str", skip_header=1,usecols=col_pred)
     y_out = np.zeros(y.shape)
     s_ind = np.where(y == 's')
+    b_ind = np.where(y == 'b')
     y_out[s_ind] = 1
+    #y_out[b_ind] = -1
+    y_out[b_ind] = 0
 
     return data,y_out
 
@@ -26,6 +30,52 @@ def findOffending(data,offending):
     out = np.zeros(data.shape)
     out[np.where(data == offending)] = 1
     return out
+
+def isolate_missing(x,offend):
+    """
+    Divide the training data matrix into 3 parts (see below)
+    Input: 
+        x (NxD) input matrix
+        offend: offending value to look for
+    Output:
+        A: All features of all samples are not offending (OK). No features are removed.
+        B: All features of all samples are not offending. Some features are removed
+        C: Most features of most samples are offending.
+        a_cols: Column indices of A
+        b_cols: Column indices of B
+        c_cols: Column indices of C
+    """
+
+    offending_rows = np.array([])
+    offending_cols = np.array([])
+    ok_rows = np.array([])
+    ok_cols = np.array([])
+
+    offend_mat = findOffending(x,offend)
+
+    for i in range(x.shape[0]):
+        if(np.where(offend_mat[i,:])[0].size > 0): #Found offending values in this row
+            offending_rows = np.append(offending_rows,i)
+        else:
+            ok_rows = np.append(ok_rows,i)
+
+    for i in range(x.shape[1]):
+        if(np.where(offend_mat[:,i])[0].size > 0): #Found offending values in this column
+            offending_cols = np.append(offending_cols,i)
+        else:
+            ok_cols = np.append(ok_cols,i)
+
+    a_grid = np.ix_(ok_rows.astype(int),np.arange(0,x.shape[1]))
+    b_grid = np.ix_(offending_rows.astype(int),ok_cols.astype(int))
+    c_grid = np.ix_(offending_rows.astype(int),offending_cols.astype(int))
+    A = x[a_grid]
+    B = x[b_grid]
+    C = x[c_grid]
+    a_cols = np.arange(0,x.shape[1])
+    b_cols = np.arange(0,B.shape[1])
+    c_cols = np.arange(B.shape[1]+1,x.shape[1])
+
+    return (A,B,C,a_cols,b_cols,c_cols,ok_rows.astype(int))
 
 def imputer(x,offend,mode):
     """Deal with offending values using following modes:
@@ -56,9 +106,8 @@ def imputer(x,offend,mode):
 def standardize(x):
     """Standardize the original data set."""
     mean_x = np.mean(x)
-    x = x - mean_x
     std_x = np.std(x)
-    x = x / std_x
+    x = (x - mean_x) / std_x
     return x, mean_x, std_x
 
 

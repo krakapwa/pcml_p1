@@ -71,4 +71,3 @@ plt.show()
 
 #Estimated classification
 cla = tb.thr_probs(probs,0.5)
-

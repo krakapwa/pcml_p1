@@ -11,47 +11,62 @@ N = data.shape[0]
 
 #Replace invalid data by mean over all valid values
 #x = hp.imputer(data,-999,'mean')
-x = data
-
-#x = data[np.where(np.sum(cats,axis=1) == 0),:]
-
 import pdb; pdb.set_trace()
-plt.hist(x[:,1],100); plt.show() #Gaussian
-plt.hist(x[:,2],100); plt.show() #Mixture of 2 gaussians
-plt.hist(x[:,3],100); plt.show()#Gaussian
-plt.hist(x[:,4],100); plt.show() #Exponential distribution?, skewed pos gauss (out)
-plt.hist(x[:,5],100); plt.show()#Mixture of 2 gaussians (out)
-plt.hist(x[:,6],100); plt.show()#skewed positive gaussian (out)
-plt.hist(x[:,7],100); plt.show() #?
-plt.hist(x[:,8],100); plt.show() #?
-plt.hist(x[:,9],100); plt.show() #?
-plt.hist(x[:,10],100); plt.show() #Exponential distribution?, skewed pos gauss
-plt.hist(x[:,11],100); plt.show() #skewed pos gauss
-plt.hist(x[:,12],100); plt.show() #?
-plt.hist(x[:,13],100); plt.show() #?
-plt.hist(x[:,14],100); plt.show() #?
-plt.hist(x[:,15],100); plt.show() #?
-plt.hist(x[:,16],100); plt.show() #Get offset?
-plt.hist(x[:,17],100); plt.show() #?
-plt.hist(x[:,18],100); plt.show() #?
-plt.hist(x[:,19],100); plt.show() #?
-plt.hist(x[:,20],100); plt.show() #?
-plt.hist(x[:,21],100); plt.show() #?
-plt.hist(x[:,22],100); plt.show() #?
-plt.hist(x[:,23],100); plt.show() #categorical
-plt.hist(x[:,24],100); plt.show() #exponential dist
-plt.hist(x[:,25],100); plt.show() #gaussian
-plt.hist(x[:,26],100); plt.show() #Get offset?
-plt.hist(x[:,27],100); plt.show() #exponential dist
-plt.hist(x[:,28],100); plt.show() #Gaussian
-plt.hist(x[:,29],100); plt.show() #Get offset?
-plt.hist(x[:,30],100); plt.show() #?
+x_A,x_B,x_C,a_cols,b_cols,c_cols,ok_rows = hp.isolate_missing(data,-999)
+y_A = y[ok_rows] #Rearrange y
 
-xprep, mean_x, std_x = hp.standardize(x)
+x_A_prep, mean_x, std_x = hp.standardize(x_A)
 
+w_estim = tb.logit_GD_ridge(y_A,x_A_prep,0.0001,lambda_=10,max_iters=100)
+probs = tb.logit(w_estim,x_A_prep)
+#w_estim = tb.logit_GD_ridge(y_A,x_A_prep,0.01,lambda_=0.1,max_iters=100)
 
-beta = np.ones((x.shape[1]+1,1))
-x_aug = np.concatenate((np.ones((x.shape[0],1)),x),axis=1) #Augmented version (for offset)
+#xprep, mean_x, std_x = hp.standardize(x[:,1:])
 
-#test = comp_p_x_beta_logit(beta,x_aug)
-grad = tb.comp_grad_logit(beta,x_aug,y)
+cov_mat = np.cov(xprep.T)
+eig_val_cov, eig_vec_cov = np.linalg.eig(cov_mat)
+for ev in eig_vec_cov:
+    np.testing.assert_array_almost_equal(1.0, np.linalg.norm(ev))
+print('Covariance Matrix:\n', cov_mat)
+
+# Make a list of (eigenvalue, eigenvector) tuples
+eig_pairs = [(np.abs(eig_val_cov[i]), eig_vec_cov[:,i]) for i in range(len(eig_val_cov))]
+
+# Sort the (eigenvalue, eigenvector) tuples from high to low
+eig_pairs.sort(key=lambda x: x[0], reverse=True)
+
+# Visually confirm that the list is correctly sorted by decreasing eigenvalues
+#for i in eig_pairs:
+    #print(i[0])
+
+nb_reduced_dim = 4
+w_list = list()
+
+for i in range(nb_reduced_dim):
+    w_list.append(eig_pairs[i][1])
+
+mat_w = np.asarray(w_list)
+
+x_proj = np.dot(mat_w,xprep.T).T
+
+#x_aug = np.concatenate((np.ones((xprep.shape[0],1)),xprep[:,np.array([2])]),axis=1)
+y_train = y
+#beta_init = np.zeros((x_aug.shape[1]))
+
+#w_estim = tb.logit_GD_ridge(y_train,x_proj,0.01,lambda_=0.1,max_iters=100)
+w_estim = tb.logit_GD(y_train,x_proj,0.005,max_iters=100)
+#w_estim = tb.logit_GD(y_train,x_proj,0.0001,max_iters=100)
+#w_estim = tb.least_squares_inv_ridge(y,x_proj,0.01)
+print(w_estim)
+probs = tb.comp_p_x_beta_logit(w_estim,x_proj)
+y_tilda = tb.thr_probs(probs,0.5)
+#z = w_estim[0] + w_estim[1]*np.linspace(0,np.max(x_aug[:,1]),100)
+z = np.dot(x_proj,w_estim)
+#plt.plot(z,'o'); plt.show()
+
+y_tilda = np.zeros((x_proj.shape[0],1))
+y_tilda[np.where(z>=0)] =  1
+y_tilda[np.where(z<0)] = -1
+
+tpr,fpr = tb.binary_tpr_fpr(y,y_tilda)
+print("TPR/FPR:", tpr, "/", fpr)
