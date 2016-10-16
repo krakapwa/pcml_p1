@@ -1,5 +1,6 @@
 import numpy as np
 import helpers as hp
+import sys
 
 def mse(y_true,y_estim):
     """
@@ -255,9 +256,126 @@ def binary_tpr_fpr(y_true,y_pred):
     true_neg = np.where(y_pred[negatives[0]] == -1)[0].shape[0]
     false_neg = np.where(y_pred[positives[0]] == -1)[0].shape[0]
 
-    tpr = true_pos/(true_pos + false_neg)
-    fpr = false_pos/(false_pos + true_neg)
+    tpr = float(true_pos)/(float(true_pos) + float(false_neg))
+    fpr = float(false_pos)/(float(false_pos) + float(true_neg))
 
     return tpr,fpr
 
+def knn_impute(A,M,K=10,nb_rand_ratio = 0.1):
+    """
+    Imputes missing values of arrays B and C using k-nearest-neighbors. Arrays are obtained using isolate_missing
+    In: A (NxD): Training data (No missing values. Will be used for kNN)
+        M (N'xD): Training data with missing values (nan)
+        K : Number of nearest neighbors
+        nb_rand_ratio: Ratio of clean samples to choose randomly from.
+    Out: Matrix of size (N+N'xD) without missing values
+    """
 
+    print("Computing k-NN for K=", K, " taking", np.round(nb_rand_ratio*A.shape[0]), " samples")
+    import pdb; pdb.set_trace()
+    for i in range(M.shape[0]):
+        sys.stdout.write('\r')
+        # the exact output you're looking for:
+        sys.stdout.write("%d/%d" % (i, M.shape[0]))
+        sys.stdout.flush()
+        ok_cols = ~np.isnan(M[i,:])
+        nan_cols = np.isnan(M[i,:])
+        norms = np.array([])
+        rand_ind = np.random.randint(0,A.shape[0],np.round(A.shape[0]*nb_rand_ratio))
+        for j in range(len(rand_ind)):
+            this_norm = np.linalg.norm(A[rand_ind[j],ok_cols]-M[i,ok_cols])
+            norms = np.append(norms,this_norm)
+        sorted_ind = np.argsort(norms)
+        this_kNN = A[sorted_ind[0:K],:]
+        mean_kNN = np.mean(this_kNN,axis=0)
+        M[i,nan_cols] = mean_kNN[nan_cols]
+
+    return np.concatenate((A,M),axis=0)
+
+
+def findOffending(data,offending):
+    """
+    Looks for values corresponding to offending and outputs matrix of same size as data
+    with 1->offending and 0 otherwise
+    """
+    out = np.zeros(data.shape)
+    out[np.where(data == offending)] = 1
+    return out
+
+def isolate_missing(x,offend):
+    """
+    Divide the training data matrix into 3 parts (see below)
+    Input:
+        x (NxD) input matrix
+        offend: offending value to look for
+    Output:
+        A: All features of all samples are not offending (OK). No features are removed.
+        B: Matrix of reduced feature dimension. Has no missing values (but lower "column" dimension)
+        C: Most features of most samples are offending.
+        a_cols: Column indices of A
+        b_cols: Column indices of B
+        c_cols: Column indices of C
+    """
+
+    offending_rows = np.array([])
+    offending_cols = np.array([])
+    ok_rows = np.array([])
+    ok_cols = np.array([])
+
+    offend_mat = findOffending(x,offend)
+
+    #Replace offending values by NaN
+    i_offend, j_offend = np.where(offend_mat)
+    x[i_offend,j_offend] = np.nan
+
+    for i in range(x.shape[0]):
+        if(np.where(offend_mat[i,:])[0].size > 0): #Found offending values in this row
+            offending_rows = np.append(offending_rows,i)
+        else:
+            ok_rows = np.append(ok_rows,i)
+
+    for i in range(x.shape[1]):
+        if(np.where(offend_mat[:,i])[0].size > 0): #Found offending values in this column
+            offending_cols = np.append(offending_cols,i)
+        else:
+            ok_cols = np.append(ok_cols,i)
+
+    a_grid = np.ix_(ok_rows.astype(int),np.arange(0,x.shape[1]))
+    b_grid = np.ix_(offending_rows.astype(int),ok_cols.astype(int))
+    c_grid = np.ix_(offending_rows.astype(int),offending_cols.astype(int))
+    A = x[a_grid]
+    B = x[b_grid]
+    C = x[c_grid]
+    a_cols = np.arange(0,x.shape[1])
+    b_cols = np.arange(0,B.shape[1])
+    c_cols = np.arange(B.shape[1]+1,x.shape[1])
+
+    new_rows = np.concatenate((ok_rows.astype(int),offending_rows.astype(int)))
+
+    return (A,B,C,a_cols,b_cols,c_cols,new_rows)
+
+def imputer(x,offend,mode):
+    """Deal with offending values using following modes:
+    'del_row': Deletes rows
+    'mean': Replace with mean value of column
+    'median': Replace with median value of column
+    ."""
+
+    offend_mat = findOffending(x,offend)
+
+    if(mode == 'del_row'):
+        ok_rows = np.where(np.sum(offend_mat,axis=1) == 0)
+        ok_rows = ok_rows[0]
+        clean_x = np.squeeze(x[ok_rows,:])
+        return clean_x
+
+    for i in range(x.shape[1]):
+        not_ok_rows = np.where(offend_mat[:,i] == 1)
+        if(mode == 'mean'):
+            this_val = np.mean(x[offend_mat[:,i] == 0,i])
+        elif(mode == 'median'):
+            this_val = np.median(x[offend_mat[:,i] == 0,i])
+
+        x[not_ok_rows,i] = this_val
+
+    return x

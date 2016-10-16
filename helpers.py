@@ -17,8 +17,8 @@ def load_data_higgs(path_dataset):
     s_ind = np.where(y == 's')
     b_ind = np.where(y == 'b')
     y_out[s_ind] = 1
-    #y_out[b_ind] = -1
-    y_out[b_ind] = 0
+    y_out[b_ind] = -1
+    #y_out[b_ind] = 0
 
     return data,y_out
 
