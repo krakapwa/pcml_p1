@@ -190,7 +190,6 @@ def logit_GD(y,x,gamma,max_iters,init_guess = None):
     w = list()
     w = init_guess
 
-    import pdb; pdb.set_trace()
     nb_iter = 0
     while(nb_iter<max_iters):
         nb_iter+=1

@@ -1,0 +1,100 @@
+% Created 2016-10-16 Sun 12:16
+\documentclass[11pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{fixltx2e}
+\usepackage{graphicx}
+\usepackage{grffile}
+\usepackage{longtable}
+\usepackage{wrapfig}
+\usepackage{rotating}
+\usepackage[normalem]{ulem}
+\usepackage{amsmath}
+\usepackage{textcomp}
+\usepackage{amssymb}
+\usepackage{capt-of}
+\usepackage{hyperref}
+\usepackage{bm}
+\usepackage{svg}
+\usepackage{graphicx}
+\graphicspath{{pics/}}
+\usepackage[margin=1in]{geometry}
+\author{Laurent Lejeune}
+\date{\today}
+\title{Higgs Boson classification\\\medskip
+\large Master's thesis proposal}
+\hypersetup{
+ pdfauthor={Laurent Lejeune},
+ pdftitle={Higgs Boson classification},
+ pdfkeywords={},
+ pdfsubject={},
+ pdfcreator={Emacs 25.1.1 (Org mode 8.3.6)}, 
+ pdflang={English}}
+\begin{document}
+
+\maketitle
+\begin{figure}\centering
+\subfloat[The Eye Tribe. Eye-gaze tracker.]{\label{fig:eyetribe} 
+\includegraphics[width=0.3\textwidth]{pics/screenshot_2016-07-29_13-18-19.png}
+} 
+\subfloat[Example of a superpixel segmentation. The green circle indicates the location of the gaze.]{\label{fig:segmentation} 
+\includegraphics[width=0.3\textwidth]{pics/screenshot_2016-07-27_15-16-43.png}
+} 
+\end{figure}
+
+\begin{figure}[htb]
+\centering
+\includegraphics[width=0.58\textwidth]{pics/minCost.pdf}
+\caption{\label{fig:orgparagraph1}
+Min cost flow problem (example with 3 parts per instant). Beliefs are propagated to every parts in both time direction within a given time window. The flow travels from the source (S) towards the sink (T).}
+\end{figure}
+
+\section{Background}
+\label{sec:orgheadline1}
+In order to train an efficient machine-learning-based classifier, the quantity/quality requirement on training data is of paramount importance for the performance of the final classification/segmentation framework (false/true positive rate, detection rate). Depending on the underlying classifier and domain of application, decent training sets typically amount to thousands of images. Furthermore, one usually relies on competent "experts" to generate and validate such training data.
+
+In the medical practice, physicians often resort to quantitative and qualitative criterion computed on (sequences of) images to render a diagnosis. Machine learning methods have been extensively used in that frame, both for segmentation and classification \cite{vijayakumar2007,gasmi2012,powell2008}. However, knowledgeable experts are often scarce and overworked, which makes it difficult to obtain sufficient quantities of training data. This research project aims at replacing the traditional mouse labeling method with an eye-gaze tracker. That is, instead of labeling and delimiting the regions of interest by drawing on images with a computer mouse, the expert is asked to stare at the region of interest on sequences of images. An eye-gaze tracker is placed in front of the monitor and points towards the experts face. The device outputs the coordinates on the screen that the expert looked at. The class of the object of interest being known, the expert is asked to keep his eyes on the object while the sequence unfolds. We dub this approach \uline{eye labeling}.
+
+\section{Aim}
+\label{sec:orgheadline2}
+ Mid-level segmentation techniques, such as superpixels \cite{achanta2012,vandenbergh2014}, are used to delimit objects or parts of objects that visually stand out relative to their neighbors. Such mid-level segmentation are applied to the whole sequence to be labeled.
+We then leverage the appearance and location consistency of the object throughout the sequence in a belief propagation paradigm. The current solution consists in building a \href{https://en.wikipedia.org/wiki/Directed_graph}{directed graph}, taking "seen" regions (i.e. regions that contain the gaze-location) as root node. The graph is then expanded forward and backward in time. A min cost flow approach allows to select a set of paths such that the total cost (linear combination of edge weights) is minimized.
+
+\section{Materials and Methods}
+\label{sec:orgheadline3}
+The student will work on:
+\begin{itemize}
+\item Extending the existing belief network to take into account motion priors from eye-gaze coordinates.
+\item Investigate methodological and algorithmical solutions to reduce the computational cost of the linear programming formulation of the min cost flow problem.
+\item If time permits, \href{https://en.wikipedia.org/wiki/Semi-supervised_learning}{semi-supervised learning} solutions will be applied to combine positive (examples labeled with a mouse) and pseudo labels (uncertain labels obtained with the belief network).
+\end{itemize}
+\section{Nature of the thesis}
+\label{sec:orgheadline4}
+\begin{itemize}
+\item Data analysis and interpretation: 0\%
+\item Implementation: 60\%
+\item Litterature review: 10\%
+\item Theory: 30\%
+\end{itemize}
+\section{Requirements}
+\label{sec:orgheadline5}
+The proposed masters thesis requires a theoretical background in computer-vision and machine learning. The practical skills include Python programming, along with Numpy and OpenCV (among others). Previous experience in MATLAB and/or C++/OpenCV will greatly help the transition to Python.
+\section{Supervision}
+\label{sec:orgheadline6}
+\begin{itemize}
+\item PhD student: Laurent Lejeune
+\item Supervisor: Raphael Sznitman
+\end{itemize}
+\section{Institute}
+\label{sec:orgheadline7}
+Ophtalmic Technology Lab, ARTORG Center, University of Bern.
+\section{Contact}
+\label{sec:orgheadline8}
+Laurent Lejeune, laurent.lejeune@artorg.unibe.ch, Murtenstrasse 50, CH-3008 Bern, office C206.2. Tel: +41 31 632 76 11
+
+
+
+\bibliographystyle{ieeetr}
+\bibliography{refs}
+\printbibliography
+\end{document}
