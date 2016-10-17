@@ -16,10 +16,13 @@
 *  Data pre-processing
 
 ** Data clean-up
-About $70%$ of the samples contain missing values. Replacing missing values by the expectation over the valid samples is unsuited for quantitative reasons. A random K-Nearest-Neighbors strategy was implemented to fill-in missing values.
+About 70% of the samples contain missing values. Replacing missing values by the expectation over the valid samples leads to a distortion of the variable's distribution, which introduces a severe bias in regression procedures. A variant of K-Nearest-Neighbors strategy was implemented to fill-in missing values cite:malarvizhi12. To alleviate the computational cost, a random uniform sampling of the valid samples (samples without missing values) was performed prior to the nearest neighbors search.
 
 ** Data preparation
-   Computing the eigen-values of the covariance matrix reveals that the second highest eigen value is xxx% smaller than the highest.
+Computing the eigen-values of the covariance matrix reveals that the second highest eigen value is xxx% smaller than the highest.
+
+* Method
+** Additive Logistic Regression cite:friedman98 
 
 \bibliographystyle{ieeetr}
 \bibliography{refs}

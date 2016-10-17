@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 import helpers as hp
 import sys
 
@@ -90,7 +91,7 @@ def least_squares_SGD(y,x,gamma,max_iters,B=1,init_guess = None):
     w = init_guess
 
     for minibatch_y, minibatch_x in hp.batch_iter(y, x, B, num_batches=max_iters, shuffle=True):
-        w = w - gamma*comp_ls_gradient(N,minibatch_x,minibatch_y-np.dot(minibatch_x,w[-1]))
+        w = w - gamma*comp_ls_gradient(N,minibatch_x,minibatch_y-np.dot(minibatch_x,w))
 
     return w
 
@@ -109,7 +110,7 @@ def least_squares_inv(y,x):
     factor = np.dot(np.linalg.inv(np.dot(x.transpose(),x)),x.transpose())
     w = np.dot(factor,y)
 
-    return
+    return w
 
 def least_squares_inv_ridge(y,phi_tilda,lambda_):
     """
@@ -271,11 +272,10 @@ def knn_impute(A,M,K=10,nb_rand_ratio = 0.1):
     """
 
     print("Computing k-NN for K=", K, " taking", np.round(nb_rand_ratio*A.shape[0]), " samples")
-    import pdb; pdb.set_trace()
     for i in range(M.shape[0]):
         sys.stdout.write('\r')
         # the exact output you're looking for:
-        sys.stdout.write("%d/%d" % (i, M.shape[0]))
+        sys.stdout.write("%f percent" % (float(i+1)/float(M.shape[0])*100))
         sys.stdout.flush()
         ok_cols = ~np.isnan(M[i,:])
         nan_cols = np.isnan(M[i,:])
@@ -354,7 +354,8 @@ def isolate_missing(x,offend):
     return (A,B,C,a_cols,b_cols,c_cols,new_rows)
 
 def imputer(x,offend,mode):
-    """Deal with offending values using following modes:
+    """
+    Deal with offending values using following modes:
     'del_row': Deletes rows
     'mean': Replace with mean value of column
     'median': Replace with median value of column
@@ -378,3 +379,7 @@ def imputer(x,offend,mode):
         x[not_ok_rows,i] = this_val
 
     return x
+
+
+
+

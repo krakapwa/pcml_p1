@@ -2,10 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import mltb as tb
 import helpers as hp
+import adaboost as ab
 
 #data_train = hp.load_data('../train.csv')[:,2:]
 #y = hp.load_data('../train.csv')[:,1:2]
-data,y = hp.load_data_higgs('../train.csv')
+data,y = hp.load_data_higgs('train.csv')
 
 N = data.shape[0]
 
@@ -13,7 +14,7 @@ N = data.shape[0]
 #x = hp.imputer(data,-999,'mean')
 x_A,x_B,x_C,a_cols,b_cols,c_cols,new_rows = tb.isolate_missing(data,-999)
 y_A = y[new_rows] #Rearrange y
-x_imp =  tb.knn_impute(x_A,np.concatenate((x_B,x_C),axis=1),K=10,nb_rand_ratio=0.005)
+x_imp =  tb.knn_impute(x_A,np.concatenate((x_B,x_C),axis=1),K=10,nb_rand_ratio=0.01)
 
 #x_imp_prep, mean_x, std_x = hp.standardize(x_imp)
 
@@ -53,8 +54,11 @@ y_train = y_A
 #w_estim = tb.logit_GD(y_train,x_proj,0.005,max_iters=100)
 #w_estim = tb.logit_GD(y_train,x_proj,0.0001,max_iters=100)
 w_estim = tb.least_squares_inv_ridge(y_train,x_proj,1)
+w_estim = tb.least_squares_SGD(y_train,x_proj,0.00001,500,B=100,init_guess=w_estim)
+#w_estim = tb.logit_GD(y_train,x_proj,0.0000001,500,init_guess = w_estim)
+
 #print(w_estim)
-#probs = tb.comp_p_x_beta_logit(w_estim,x_proj)
+#probs = tb.logit(w_estim,x_proj)
 #y_tilda = tb.thr_probs(probs,0.5)
 #z = w_estim[0] + w_estim[1]*np.linspace(0,np.max(x_aug[:,1]),100)
 z = np.dot(x_proj,w_estim)
@@ -62,5 +66,10 @@ y_tilda = np.sign(z)
 #plt.plot(z,'o'); plt.show()
 #plt.plot(y_tilda,'o'); plt.show()
 
+tpr,fpr = tb.binary_tpr_fpr(y_train,y_tilda)
+print("TPR/FPR:", tpr, "/", fpr)
+
+F = ab.run(y_train,x_proj,10,30)
+y_tilda,error_rate =  ab.predict(F,y_train)
 tpr,fpr = tb.binary_tpr_fpr(y_train,y_tilda)
 print("TPR/FPR:", tpr, "/", fpr)
