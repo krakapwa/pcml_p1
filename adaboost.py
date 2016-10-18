@@ -93,7 +93,8 @@ def predict(F,y):
 
     pred = np.zeros((y.shape[0],1))
     for i in range(len(F)):
-        pred += F[i]['alpha']*F[i]['best_pred']
+        #pred += F[i]['alpha']*F[i]['best_pred']
+        pred += F[i]['best_pred']
 
     pred = np.sign(pred)
 

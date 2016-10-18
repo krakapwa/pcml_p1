@@ -6,7 +6,7 @@ import adaboost as ab
 
 #data_train = hp.load_data('../train.csv')[:,2:]
 #y = hp.load_data('../train.csv')[:,1:2]
-data,y = hp.load_data_higgs('train.csv')
+data,y = hp.load_data_higgs('../train.csv')
 
 N = data.shape[0]
 
@@ -69,7 +69,7 @@ y_tilda = np.sign(z)
 tpr,fpr = tb.binary_tpr_fpr(y_train,y_tilda)
 print("TPR/FPR:", tpr, "/", fpr)
 
-F = ab.run(y_train,x_proj,10,30)
+F = ab.run(y_train,x_proj,3,30)
 y_tilda,error_rate =  ab.predict(F,y_train)
 tpr,fpr = tb.binary_tpr_fpr(y_train,y_tilda)
 print("TPR/FPR:", tpr, "/", fpr)
