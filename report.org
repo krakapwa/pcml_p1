@@ -22,6 +22,8 @@ About 70% of the samples contain missing values. Replacing missing values by the
 Computing the eigen-values of the covariance matrix reveals that the second highest eigen value is xxx% smaller than the highest.
 
 * Method
+
+** Adaboost with decision stumps
 ** Additive Logistic Regression cite:friedman98 
 
 \bibliographystyle{ieeetr}

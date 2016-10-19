@@ -6,7 +6,7 @@ import adaboost as ab
 
 #data_train = hp.load_data('../train.csv')[:,2:]
 #y = hp.load_data('../train.csv')[:,1:2]
-data,y = hp.load_data_higgs('train.csv')
+data,y = hp.load_data_higgs('../train.csv')
 
 N = data.shape[0]
 
@@ -14,7 +14,7 @@ N = data.shape[0]
 #x = hp.imputer(data,-999,'mean')
 x_A,x_B,x_C,a_cols,b_cols,c_cols,new_rows = tb.isolate_missing(data,-999)
 y_A = y[new_rows] #Rearrange y
-x_imp =  tb.knn_impute(x_A,np.concatenate((x_B,x_C),axis=1),K=10,nb_rand_ratio=0.01)
+x_knn =  tb.knn_impute(x_A,np.concatenate((x_B,x_C),axis=1),K=10,nb_rand_ratio=0.01)
 
 #x_imp_prep, mean_x, std_x = hp.standardize(x_imp)
 
@@ -23,8 +23,11 @@ x_imp =  tb.knn_impute(x_A,np.concatenate((x_B,x_C),axis=1),K=10,nb_rand_ratio=0
 #w_estim = tb.logit_GD_ridge(y_A,x_A_prep,0.01,lambda_=0.1,max_iters=100)
 
 #xprep, mean_x, std_x = hp.standardize(x[:,1:])
+data = np.load('train_kNN.npz')
+x_knn = data['x_knn']
+y_A = data['y_A']
 
-cov_mat = np.cov(x_imp.T)
+cov_mat = np.cov(x_knn.T)
 eig_val_cov, eig_vec_cov = np.linalg.eig(cov_mat)
 for ev in eig_vec_cov:
     np.testing.assert_array_almost_equal(1.0, np.linalg.norm(ev))
@@ -44,7 +47,7 @@ for i in range(nb_reduced_dim):
 
 mat_w = np.asarray(w_list)
 
-x_proj = np.dot(mat_w,x_imp.T).T
+x_proj = np.dot(mat_w,x_knn.T).T
 
 #x_aug = np.concatenate((np.ones((xprep.shape[0],1)),xprep[:,np.array([2])]),axis=1)
 y_train = y_A
@@ -69,7 +72,15 @@ y_tilda = np.sign(z)
 tpr,fpr = tb.binary_tpr_fpr(y_train,y_tilda)
 print("TPR/FPR:", tpr, "/", fpr)
 
-F = ab.run(y_train,x_proj,10,30)
-y_tilda,error_rate =  ab.predict(F,y_train)
+data = np.load('train_kNN.npz')
+lala = data['arr_0']
+
+nb_iters = 45
+ratio = 0.002
+nb_thr = 100
+
+F = ab.run(y_train,x_proj,nb_iters,nb_thr)
+
+y_tilda =  ab.predict(F,x_proj)
 tpr,fpr = tb.binary_tpr_fpr(y_train,y_tilda)
 print("TPR/FPR:", tpr, "/", fpr)
