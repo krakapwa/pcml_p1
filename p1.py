@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import mltb as tb
 import helpers as hp
 import adaboost as ab
+#from sklearn.datasets import make_gaussian_quantiles
+
 
 #data_train = hp.load_data('../train.csv')[:,2:]
 #y = hp.load_data('../train.csv')[:,1:2]
@@ -14,6 +16,7 @@ N = data.shape[0]
 #x = hp.imputer(data,-999,'mean')
 x_A,x_B,x_C,a_cols,b_cols,c_cols,new_rows = tb.isolate_missing(data,-999)
 y_A = y[new_rows] #Rearrange y
+y_A = y_A[0:x_A.shape[0]]
 x_knn =  tb.knn_impute(x_A,np.concatenate((x_B,x_C),axis=1),K=10,nb_rand_ratio=0.01)
 
 #x_imp_prep, mean_x, std_x = hp.standardize(x_imp)
@@ -27,60 +30,45 @@ data = np.load('train_kNN.npz')
 x_knn = data['x_knn']
 y_A = data['y_A']
 
-cov_mat = np.cov(x_knn.T)
-eig_val_cov, eig_vec_cov = np.linalg.eig(cov_mat)
-for ev in eig_vec_cov:
-    np.testing.assert_array_almost_equal(1.0, np.linalg.norm(ev))
-#print('Covariance Matrix:\n', cov_mat)
 
-# Make a list of (eigenvalue, eigenvector) tuples
-eig_pairs = [(np.abs(eig_val_cov[i]), eig_vec_cov[:,i]) for i in range(len(eig_val_cov))]
+x_pca,eig_pairs = pca(x_A,nb_dims)
 
-# Sort the (eigenvalue, eigenvector) tuples from high to low
-eig_pairs.sort(key=lambda x: x[0], reverse=True)
-
-nb_reduced_dim = 30
-w_list = list()
-
-for i in range(nb_reduced_dim):
-    w_list.append(eig_pairs[i][1])
-
-mat_w = np.asarray(w_list)
-
-x_proj = np.dot(mat_w,x_knn.T).T
-
-#x_aug = np.concatenate((np.ones((xprep.shape[0],1)),xprep[:,np.array([2])]),axis=1)
-y_train = y_A
-#beta_init = np.zeros((x_aug.shape[1]))
-
-#w_estim = tb.logit_GD_ridge(y_train,x_proj,0.01,lambda_=0.1,max_iters=100)
-#w_estim = tb.logit_GD(y_train,x_proj,0.005,max_iters=100)
-#w_estim = tb.logit_GD(y_train,x_proj,0.0001,max_iters=100)
 w_estim = tb.least_squares_inv_ridge(y_train,x_proj,1)
 w_estim = tb.least_squares_SGD(y_train,x_proj,0.00001,500,B=100,init_guess=w_estim)
-#w_estim = tb.logit_GD(y_train,x_proj,0.0000001,500,init_guess = w_estim)
 
-#print(w_estim)
-#probs = tb.logit(w_estim,x_proj)
-#y_tilda = tb.thr_probs(probs,0.5)
-#z = w_estim[0] + w_estim[1]*np.linspace(0,np.max(x_aug[:,1]),100)
 z = np.dot(x_proj,w_estim)
 y_tilda = np.sign(z)
-#plt.plot(z,'o'); plt.show()
-#plt.plot(y_tilda,'o'); plt.show()
 
 tpr,fpr = tb.binary_tpr_fpr(y_train,y_tilda)
 print("TPR/FPR:", tpr, "/", fpr)
 
-data = np.load('train_kNN.npz')
-lala = data['arr_0']
+#PCA
+nb_iters = 120
+F = ab.run(y_A,x_proj,nb_iters)
+y_tilda =  ab.predict(F,x_proj)
+tpr,fpr = tb.binary_tpr_fpr(y_A,y_tilda)
+print("TPR/FPR:", tpr, "/", fpr)
 
-nb_iters = 45
-ratio = 0.002
-nb_thr = 100
-
-F = ab.run(y_train,x_proj,nb_iters,nb_thr)
-
+nb_iters = 120
+F = ab.run(y_train,x_proj,nb_iters)
 y_tilda =  ab.predict(F,x_proj)
 tpr,fpr = tb.binary_tpr_fpr(y_train,y_tilda)
 print("TPR/FPR:", tpr, "/", fpr)
+
+nb_iters = 120
+F = ab.run(y_A,x_A,nb_iters)
+y_tilda =  ab.predict(F,x_A)
+tpr,fpr = tb.binary_tpr_fpr(y_A,y_tilda)
+print("TPR/FPR:", tpr, "/", fpr)
+
+# Construct dataset
+X1, y1 = make_gaussian_quantiles(cov=2.,
+                                 n_samples=200, n_features=2,
+                                 n_classes=2, random_state=1)
+X2, y2 = make_gaussian_quantiles(mean=(3, 3), cov=1.5,
+                                 n_samples=300, n_features=2,
+                                 n_classes=2, random_state=1)
+X = np.concatenate((X1, X2))
+y = np.concatenate((y1, - y2 + 1))
+
+F = ab.run(y,X,200)

@@ -3,6 +3,32 @@ import matplotlib.pyplot as plt
 import helpers as hp
 import sys
 
+def pca(x,nb_dims):
+
+    cov_mat = np.cov(x.T)
+    eig_val_cov, eig_vec_cov = np.linalg.eig(cov_mat)
+    for ev in eig_vec_cov:
+        np.testing.assert_array_almost_equal(1.0, np.linalg.norm(ev))
+    #print('Covariance Matrix:\n', cov_mat)
+
+    # Make a list of (eigenvalue, eigenvector) tuples
+    eig_pairs = [(np.abs(eig_val_cov[i]), eig_vec_cov[:,i]) for i in range(len(eig_val_cov))]
+
+    # Sort the (eigenvalue, eigenvector) tuples from high to low
+    eig_pairs.sort(key=lambda x: x[0], reverse=True)
+
+    nb_reduced_dim = 5
+    w_list = list()
+
+    for i in range(nb_reduced_dim):
+        w_list.append(eig_pairs[i][1])
+
+    mat_w = np.asarray(w_list)
+
+    x_proj = np.dot(mat_w,x.T).T
+
+    return x_proj, eig_pairs
+
 def mse(y_true,y_estim):
     """
     Computes the mean squared error between two outputs
@@ -285,8 +311,11 @@ def knn_impute(A,M,K=10,nb_rand_ratio = 0.1):
             this_norm = np.linalg.norm(A[rand_ind[j],ok_cols]-M[i,ok_cols])
             norms = np.append(norms,this_norm)
         sorted_ind = np.argsort(norms)
+        sorted_norms = norms[sorted_ind[0:K]]
+        sorted_norms = (sorted_norms/np.sum(sorted_norms)).reshape((K,1))
         this_kNN = A[sorted_ind[0:K],:]
-        mean_kNN = np.mean(this_kNN,axis=0)
+        #Change to weighted mean!!
+        mean_kNN = np.mean(this_kNN*sorted_norms,axis=0)
         M[i,nan_cols] = mean_kNN[nan_cols]
 
     return np.concatenate((A,M),axis=0)
