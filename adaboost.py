@@ -31,10 +31,11 @@ def make_stump(y,x,w):
         this_col = x[:,i]
         sorted_ind = np.argsort(this_col)
         y_sorted = (y[sorted_ind] + 1)/2
-        #lower or equal as positive, the rest as negative
+
+        #lower or equal as positive class, the rest as negative
         cumsum_leq = np.cumsum(w[sorted_ind]*np.invert(y_sorted.astype(bool)))
 
-        #greater than as positive, the rest as negative
+        #greater than as positive class, the rest as negative
         cumsum_gt = np.cumsum(w[sorted_ind[::-1]]*y_sorted[::-1].astype(bool))
 
         leq_error = cumsum_leq + cumsum_gt[::-1]
@@ -53,12 +54,11 @@ def make_stump(y,x,w):
             this_thr = this_col[sorted_ind[ind_min_gt]]
             this_mode = 'gt'
 
-        #this_thr = (this_feat_min + float(j)*step_size)
         pred_vals = thr_classify(x,i,this_thr,mode=this_mode)
         missclassified = np.ones((N,1))
         missclassified[np.where(np.ravel(pred_vals) == np.ravel(y))[0]] = 0
         e = np.dot(w.T,missclassified)
-        #e = 0.5 - 0.5*np.dot(w.T,missclassified)
+
         if (e < min_error):
             min_error = e
             best_pred = pred_vals
@@ -89,7 +89,7 @@ def run(y,x,M):
     F.append(init_classifier)
     overall_best_pred = np.zeros((x.shape[0],1))
     for i in range(M):
-        #x = x*F[i]['weights']
+
         stump,min_error,best_pred = make_stump(y,x,F[i]['weights'])
         F[i]['stump'] = stump
         F[i]['min_error'] = min_error
@@ -98,16 +98,13 @@ def run(y,x,M):
 
         loss = np.exp(-y*alpha*best_pred)
 
-        #loss = np.exp(-y*alpha*best_pred)
         loss.shape = (loss.shape[0],1)
         F[i]['alpha'] = alpha
 
         overall_best_pred += F[i]['alpha']*best_pred
         missclassified = np.ones((x.shape[0],1))
         missclassified[np.where(np.ravel(np.sign(overall_best_pred)) == np.ravel(y))[0]] = 0
-        print("AdaBoost iter. ", i, "current_missclass_rate:", np.sum(missclassified)/x.shape[0], "stump:", stump)
-        #print(min_error)
-        #print(alpha)
+        print("Iter. ", i, "missclass_rate:", np.sum(missclassified)/x.shape[0], "stump:", stump)
 
         if(i==M-1): break
 

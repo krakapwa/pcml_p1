@@ -15,21 +15,39 @@ N = data.shape[0]
 #Replace invalid data by mean over all valid values
 #x = hp.imputer(data,-999,'mean')
 x_A,x_B,x_C,a_cols,b_cols,c_cols,new_rows = tb.isolate_missing(data,-999)
-y_A = y[new_rows] #Rearrange y
+
+x_good_cols = np.concatenate((x_A[:,0:x_B.shape[1]],x_B),axis=0)
+
+print("Study of conditional probabilities on missing values")
+x_bad_rows = np.concatenate((x_B,x_C),axis=1)
+y_bad_rows = y[new_rows[x_A.shape[0]:]]
+x_good_rows = x_A
+y_good_rows = y[new_rows[0:x_A.shape[0]]]
+
+p_miss_1 = y_bad_rows.shape[0]/y.shape[0]
+p_miss_0 = y_good_rows.shape[0]/y.shape[0]
+
+p_y1_miss_1 = (np.where(y_bad_rows == 1)[0].shape[0]/y.shape[0])/(p_miss_1)
+p_y0_miss_1 = (np.where(y_bad_rows == -1)[0].shape[0]/y.shape[0])/(p_miss_1)
+p_y0_miss_0 = (np.where(y_good_rows == -1)[0].shape[0]/y.shape[0])/(p_miss_0)
+p_y1_miss_0 = (np.where(y_good_rows == 1)[0].shape[0]/y.shape[0])/(p_miss_0)
+
+print("P(Y=1|X has missing attr) = ", p_y1_miss_1)
+print("P(Y=-1|X has missing attr) = ", p_y0_miss_1)
+print("P(Y=1|X has no missing attr) = ", p_y1_miss_0)
+print("P(Y=-1|X has no missing attr) = ", p_y0_miss_0)
+
+y_knn = y[new_rows] #Rearrange y
 y_A = y_A[0:x_A.shape[0]]
 x_knn =  tb.knn_impute(x_A,np.concatenate((x_B,x_C),axis=1),K=10,nb_rand_ratio=0.01)
 
-#x_imp_prep, mean_x, std_x = hp.standardize(x_imp)
-
-#w_estim = tb.logit_GD_ridge(y_A,x_A_prep,0.0001,lambda_=10,max_iters=100)
-#probs = tb.logit(w_estim,x_A_prep)
-#w_estim = tb.logit_GD_ridge(y_A,x_A_prep,0.01,lambda_=0.1,max_iters=100)
-
-#xprep, mean_x, std_x = hp.standardize(x[:,1:])
 data = np.load('train_kNN.npz')
 x_knn = data['x_knn']
 y_A = data['y_A']
 
+x_miss = np.concatenate((np.zeros((y_good_rows.shape[0],1)),np.ones((y_bad_rows.shape[0],1))),axis=0)
+x_knn_aug = np.concatenate((x_miss, x_knn),axis=1)
+x_good_cols_aug = np.concatenate((x_miss,x_good_cols),axis=1)
 
 x_pca,eig_pairs = pca(x_A,nb_dims)
 
@@ -43,32 +61,46 @@ tpr,fpr = tb.binary_tpr_fpr(y_train,y_tilda)
 print("TPR/FPR:", tpr, "/", fpr)
 
 #PCA
-nb_iters = 120
+nb_iters = 200
 F = ab.run(y_A,x_proj,nb_iters)
 y_tilda =  ab.predict(F,x_proj)
 tpr,fpr = tb.binary_tpr_fpr(y_A,y_tilda)
 print("TPR/FPR:", tpr, "/", fpr)
 
-nb_iters = 120
-F = ab.run(y_train,x_proj,nb_iters)
-y_tilda =  ab.predict(F,x_proj)
+#Missing values replaced with K-Nearest-Neighbors
+nb_iters = 300
+F = ab.run(y_knn,x_knn,nb_iters)
+y_tilda =  ab.predict(F,x_knn)
 tpr,fpr = tb.binary_tpr_fpr(y_train,y_tilda)
 print("TPR/FPR:", tpr, "/", fpr)
 
+#Missing values replaced with K-Nearest-Neighbors, x_miss attribute added
 nb_iters = 120
-F = ab.run(y_A,x_A,nb_iters)
+F = ab.run(y_knn,x_knn_aug,nb_iters)
+f = [F[i]['stump']['feat'] for i in range(len(F))]
+y_tilda =  ab.predict(F,x_knn_aug)
+tpr,fpr = tb.binary_tpr_fpr(y_train,y_tilda)
+print("TPR/FPR:", tpr, "/", fpr)
+
+#Only "good" samples (without missing values)
+nb_iters = 200
+y_clean = y_A[0:x_A.shape[0]]
+F = ab.run(y_clean,x_A,nb_iters)
 y_tilda =  ab.predict(F,x_A)
 tpr,fpr = tb.binary_tpr_fpr(y_A,y_tilda)
 print("TPR/FPR:", tpr, "/", fpr)
 
-# Construct dataset
-X1, y1 = make_gaussian_quantiles(cov=2.,
-                                 n_samples=200, n_features=2,
-                                 n_classes=2, random_state=1)
-X2, y2 = make_gaussian_quantiles(mean=(3, 3), cov=1.5,
-                                 n_samples=300, n_features=2,
-                                 n_classes=2, random_state=1)
-X = np.concatenate((X1, X2))
-y = np.concatenate((y1, - y2 + 1))
+#Only "good" columns (without missing values)
+nb_iters = 120
+F = ab.run(y_knn,x_good_cols,nb_iters)
+y_tilda =  ab.predict(F,x_A)
+tpr,fpr = tb.binary_tpr_fpr(y_A,y_tilda)
+print("TPR/FPR:", tpr, "/", fpr)
 
-F = ab.run(y,X,200)
+#Only "good" columns (without missing values), x_miss attribute added
+nb_iters = 120
+F = ab.run(y_knn,x_good_cols_aug,nb_iters)
+f = [F[i]['stump']['feat'] for i in range(len(F))]
+y_tilda =  ab.predict(F,x_A)
+tpr,fpr = tb.binary_tpr_fpr(y_A,y_tilda)
+print("TPR/FPR:", tpr, "/", fpr)
