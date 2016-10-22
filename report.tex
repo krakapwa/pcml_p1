@@ -1,5 +1,5 @@
-% Created 2016-10-16 Sun 13:01
-\documentclass[11pt]{article}
+% Created 2016-10-21 Fri 15:08
+\documentclass[10pt,conference,compsocconf]{IEEEtran}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{fixltx2e}
@@ -19,6 +19,9 @@
 \usepackage{graphicx}
 \graphicspath{{pics/}}
 \usepackage[margin=1in]{geometry}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\documentclass[10pt,conference,compsocconf]{IEEEtran}
 \author{Laurent Lejeune, Tatiana Fountoukidou, Guillaume de Montauzon}
 \date{\today}
 \title{Higgs Boson classification}
@@ -32,23 +35,74 @@
 \begin{document}
 
 \maketitle
+\section{Introduction}
+\label{sec:orgheadline1}
 
 
-\section{Data pre-processing}
-\label{sec:orgheadline3}
+\section{Data pre-processing and exploration}
+\label{sec:orgheadline8}
 
 \subsection{Data clean-up}
-\label{sec:orgheadline1}
-About 70\% of the samples contain missing values. Replacing missing values by the expectation over the valid samples leads to a distortion of the variable's distribution, which introduces a severe bias in regression procedures. A variant of K-Nearest-Neighbors strategy was implemented to fill-in missing values \cite{malarvizhi12}. To alleviate the computational cost, a random uniform sampling of the valid samples (samples without missing values) was performed prior to the nearest neighbors search.
+\label{sec:orgheadline5}
+About 70\% of the samples contain missing values. Replacing missing values by the expectation over the valid samples leads to a distortion of the variable's distribution, which introduces a severe bias in regression procedures. The strategies that were implemented and tested are now introduced.
+
+\begin{enumerate}
+\item Least-squares regression
+\label{sec:orgheadline2}
+
+\item Attribute removal
+\label{sec:orgheadline3}
+Among the 30 attributes given in the datasets, 11 contain missing values. The most straight-forward appraoch is to remove those attributes from the sets and thus reduce the dimensionality of the problem.
+
+\item K-Nearest-Neighbors regression
+\label{sec:orgheadline4}
+A variant of the K-Nearest-Neighbors algorithm was implemented to fill-in missing values \cite{malarvizhi12}. To alleviate the computational cost, a random uniform sampling of the valid samples (samples without missing values) was performed prior to the nearest neighbors search.
+The missing values are replaced by the weighted average value over its K nearest neighbors using Euclidean distance.
+\end{enumerate}
 
 \subsection{Data preparation}
-\label{sec:orgheadline2}
+\label{sec:orgheadline6}
 Computing the eigen-values of the covariance matrix reveals that the second highest eigen value is xxx\% smaller than the highest.
 
-\section{Method}
-\label{sec:orgheadline5}
+\subsection{Analysis of missing values}
+\label{sec:orgheadline7}
+The class probabilities given the presence or absence of missing values are computed on the training set. 
+\begin{itemize}
+\item \(P(Y=1|X \text{has missing attributes}) \approx 0.30\)
+\item \(P(Y=-1|X \text{has missing attributes}) \approx 0.70\)
+\item \(P(Y=1|X \text{has no missing attributes}) \approx 0.47\)
+\item \(P(Y=-1|X \text{has no missing attributes}) \approx 0.53\)
+\end{itemize}
+
+The above results justifies the choice of adding an indicator variable \(x_{miss}\) that takes value 0 if no attributes are missing and 1 otherwise.
+
+\section{Methods}
+\label{sec:orgheadline11}
+
+\subsection{AdaBoost with decision stumps}
+\label{sec:orgheadline9}
+The idea of adding weak learners in a stage-wise manner to produce a strong classifier is commonly referred to as boosting. Discrete AdaBoost, described in \cite{friedman98}, consists in adapting the weights of samples based on the missclassification error. The goal is to penalize missclassified samples and re-inject the weights for the computation of the next stage.
+
+\begin{algorithm}
+\caption{Discrete AdaBoost}
+\label{CHalgorithm}
+\begin{algorithmic}[1]
+\State Start with weights $w_i = \frac{1}{N}, i=1,...,N$
+\For{ $t=1,2,...,T$}
+\State Fit the classifier $h_t(\bm{x}) \in \{-1,1\}$ using weights $w_i$
+\State Compute $\bm{e}_t = \sum_{i=1}^N{\bm{w}_i,t}$, where $h_t(x_i) \neq y_i$
+\State Choose $\alpha_t = \frac{1}{2} \log{\frac{1-\bm{e}_t}{\bm{e}_t}}$
+\State Add to ensemble: $\bm{F}_t(\bm{x}) = \bm{F}_{t-1}(\bm{x}) + \alpha_t h_t(x)$ 
+\State Update weights: $\bm{w}_{i,t+1} = \bm{w}_{i,t} e^{-\bm{y}_i \alpha_t \bm{h}_t(x)}$ 
+\State Renormalize $\bm{w}_{i,t+1} such that \sum_i{\bm{w}_{i,t+1}} = 1$
+\EndFor
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+A very simple version of AdaBoost was implemented that finds optimal decision stumps as weak-learners, that is, thresholding function that best separates the positive and negative classes based on a single attribute.
 \subsection{Additive Logistic Regression \cite{friedman98}}
-\label{sec:orgheadline4}
+\label{sec:orgheadline10}
 
 
 \bibliographystyle{ieeetr}
