@@ -2,11 +2,22 @@
 """some helper functions."""
 import numpy as np
 
+def write_submission_higgs(y,id_,path):
+
+    y.shape = (y.shape[0],1)
+    id_.shape = (id_.shape[0],1)
+    header = "Id,Prediction"
+    np.savetxt(path,np.concatenate((id_,y),axis=1),fmt='%d',delimiter=',',header=header,comments='')
+
+    return True
+
 def load_data_higgs(path_dataset):
     """Load data and convert it to the metrics system."""
     col_pred = 1
-    data = np.genfromtxt(
-        path_dataset, delimiter=",", skip_header=1)
+    data = np.genfromtxt(path_dataset, delimiter=",", skip_header=1)
+
+    id_ = data[:,0]
+
     data = np.delete(data,col_pred,axis=1)
     data = np.delete(data,0,axis=1)
 
@@ -20,7 +31,8 @@ def load_data_higgs(path_dataset):
     y_out[b_ind] = -1
     #y_out[b_ind] = 0
 
-    return data,y_out
+
+    return data,y_out,id_
 
 def findOffending(data,offending):
     """
@@ -34,7 +46,7 @@ def findOffending(data,offending):
 def isolate_missing(x,offend):
     """
     Divide the training data matrix into 3 parts (see below)
-    Input: 
+    Input:
         x (NxD) input matrix
         offend: offending value to look for
     Output:

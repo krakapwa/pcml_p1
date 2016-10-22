@@ -5,10 +5,13 @@ import helpers as hp
 
 def thr_classify(x,dim,thr_val,mode='leq'):
     out = -np.ones((x.shape[0],1))
+    nan_ind = np.where(np.isnan(x[:,dim]))[0]
     if(mode == 'leq'):
         out[x[:,dim] <= thr_val] = 1.0
     elif(mode == 'gt'):
         out[x[:,dim] > thr_val] = 1.0
+
+    out[nan_ind] = 0
 
     return out
 
@@ -135,6 +138,5 @@ def predict(F,x):
         this_pred = this_alpha*thr_classify(x,this_feat,this_thr,mode=this_mode)
         pred += this_pred
 >>>>>>> 450214fc088bd191c8fe72400bb2f65f2942240e
-
 
     return np.sign(pred)
