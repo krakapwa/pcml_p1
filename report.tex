@@ -1,4 +1,4 @@
-% Created 2016-10-21 Fri 15:08
+% Created 2016-10-21 Fri 17:03
 \documentclass[10pt,conference,compsocconf]{IEEEtran}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -37,11 +37,8 @@
 \maketitle
 \section{Introduction}
 \label{sec:orgheadline1}
-
-
 \section{Data pre-processing and exploration}
 \label{sec:orgheadline8}
-
 \subsection{Data clean-up}
 \label{sec:orgheadline5}
 About 70\% of the samples contain missing values. Replacing missing values by the expectation over the valid samples leads to a distortion of the variable's distribution, which introduces a severe bias in regression procedures. The strategies that were implemented and tested are now introduced.
@@ -77,8 +74,7 @@ The class probabilities given the presence or absence of missing values are comp
 The above results justifies the choice of adding an indicator variable \(x_{miss}\) that takes value 0 if no attributes are missing and 1 otherwise.
 
 \section{Methods}
-\label{sec:orgheadline11}
-
+\label{sec:orgheadline10}
 \subsection{AdaBoost with decision stumps}
 \label{sec:orgheadline9}
 The idea of adding weak learners in a stage-wise manner to produce a strong classifier is commonly referred to as boosting. Discrete AdaBoost, described in \cite{friedman98}, consists in adapting the weights of samples based on the missclassification error. The goal is to penalize missclassified samples and re-inject the weights for the computation of the next stage.
@@ -101,11 +97,4 @@ The idea of adding weak learners in a stage-wise manner to produce a strong clas
 \end{algorithm}
 
 A very simple version of AdaBoost was implemented that finds optimal decision stumps as weak-learners, that is, thresholding function that best separates the positive and negative classes based on a single attribute.
-\subsection{Additive Logistic Regression \cite{friedman98}}
-\label{sec:orgheadline10}
-
-
-\bibliographystyle{ieeetr}
-\bibliography{refs}
-\printbibliography
 \end{document}

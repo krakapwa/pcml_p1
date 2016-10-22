@@ -9,7 +9,6 @@
 #+LATEX_HEADER: \documentclass[10pt,conference,compsocconf]{IEEEtran}
 #+LATEX_CLASS: IEEEtran
 
-
 # Local Variables:
 # org-ref-default-bibliography: refs.bib
 # End:
@@ -17,10 +16,7 @@
 #+AUTHOR: Laurent Lejeune, Tatiana Fountoukidou, Guillaume de Montauzon
 #+OPTIONS: toc:nil        no default TOC at all
 * Introduction 
-
-
 *  Data pre-processing and exploration
-
 ** Data clean-up
 About 70% of the samples contain missing values. Replacing missing values by the expectation over the valid samples leads to a distortion of the variable's distribution, which introduces a severe bias in regression procedures. The strategies that were implemented and tested are now introduced.
 
@@ -46,7 +42,6 @@ Computing the eigen-values of the covariance matrix reveals that the second high
 The above results justifies the choice of adding an indicator variable $x_{miss}$ that takes value 0 if no attributes are missing and 1 otherwise.
 
 * Methods
-
 ** AdaBoost with decision stumps
 The idea of adding weak learners in a stage-wise manner to produce a strong classifier is commonly referred to as boosting. Discrete AdaBoost, described in cite:friedman98, consists in adapting the weights of samples based on the missclassification error. The goal is to penalize missclassified samples and re-inject the weights for the computation of the next stage.
 
@@ -61,16 +56,10 @@ The idea of adding weak learners in a stage-wise manner to produce a strong clas
 \State Choose $\alpha_t = \frac{1}{2} \log{\frac{1-\bm{e}_t}{\bm{e}_t}}$
 \State Add to ensemble: $\bm{F}_t(\bm{x}) = \bm{F}_{t-1}(\bm{x}) + \alpha_t h_t(x)$ 
 \State Update weights: $\bm{w}_{i,t+1} = \bm{w}_{i,t} e^{-\bm{y}_i \alpha_t \bm{h}_t(x)}$ 
-\State Renormalize $\bm{w}_{i,t+1} such that \sum_i{\bm{w}_{i,t+1}} = 1$
+\State Renormalize $\bm{w}_{i,t+1}$ such that $\sum_i{\bm{w}_{i,t+1}} = 1$
 \EndFor
 \EndProcedure
 \end{algorithmic}
 \end{algorithm}
 
 A very simple version of AdaBoost was implemented that finds optimal decision stumps as weak-learners, that is, thresholding function that best separates the positive and negative classes based on a single attribute.
-** Additive Logistic Regression cite:friedman98 
-
-
-\bibliographystyle{ieeetr}
-\bibliography{refs}
-\printbibliography
