@@ -58,6 +58,7 @@ def isolate_missing(x,offend):
         c_cols: Column indices of C
     """
 
+    import pdb; pdb.set_trace()
     offending_rows = np.array([])
     offending_cols = np.array([])
     ok_rows = np.array([])
@@ -65,6 +66,7 @@ def isolate_missing(x,offend):
 
     offend_mat = findOffending(x,offend)
 
+    import pdb; pdb.set_trace()
     for i in range(x.shape[0]):
         if(np.where(offend_mat[i,:])[0].size > 0): #Found offending values in this row
             offending_rows = np.append(offending_rows,i)
@@ -77,6 +79,7 @@ def isolate_missing(x,offend):
         else:
             ok_cols = np.append(ok_cols,i)
 
+    import pdb; pdb.set_trace()
     a_grid = np.ix_(ok_rows.astype(int),np.arange(0,x.shape[1]))
     b_grid = np.ix_(offending_rows.astype(int),ok_cols.astype(int))
     c_grid = np.ix_(offending_rows.astype(int),offending_cols.astype(int))
