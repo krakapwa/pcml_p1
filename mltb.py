@@ -365,8 +365,10 @@ def isolate_missing(x,offend):
     ok_rows = np.array([])
     ok_cols = np.array([])
 
+    import pdb; pdb.set_trace()
     offend_mat = findOffending(x,offend)
 
+    import pdb; pdb.set_trace()
     #Replace offending values by NaN
     i_offend, j_offend = np.where(offend_mat)
     x[i_offend,j_offend] = np.nan
@@ -390,6 +392,7 @@ def isolate_missing(x,offend):
     B = x[b_grid]
     C = x[c_grid]
 
+    import pdb; pdb.set_trace()
     new_rows = np.concatenate((ok_rows.astype(int),offending_rows.astype(int)))
     new_cols = np.concatenate((ok_cols.astype(int),offending_cols.astype(int)))
 
