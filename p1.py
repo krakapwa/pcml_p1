@@ -104,7 +104,6 @@ tpr,fpr = tb.binary_tpr_fpr(y_knn,y_tilda)
 error_rate = tb.missclass_error_rate(y_knn,y_tilda)
 print("TPR/FPR/error_rate:", tpr, "/", fpr, "/", error_rate)
 
-
 #Only "good" samples (without missing values)
 y_clean = y_A[0:x_A.shape[0]]
 F = ab.run(y_clean,x_A,nb_iters)
