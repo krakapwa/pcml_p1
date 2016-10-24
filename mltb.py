@@ -267,40 +267,7 @@ def thr_probs(probs,thr):
 
     return classes
 
-def binary_tpr_fpr(y_true,y_pred):
-    """
-    Computes the true/false positive rates. y_true must be either +1 or -1
-    In: y_true (Nx1): Training values
-        y_pred (Nx1): Predicted values
-    Out: True/False positives rates
-    """
 
-    positives = np.where(y_true == 1)
-    negatives = np.where(y_true == -1)
-    true_pos = np.where(y_pred[positives[0]] == 1)[0].shape[0]
-    false_pos = np.where(y_pred[negatives[0]] == 1)[0].shape[0]
-    true_neg = np.where(y_pred[negatives[0]] == -1)[0].shape[0]
-    false_neg = np.where(y_pred[positives[0]] == -1)[0].shape[0]
-
-    tpr = float(true_pos)/(float(true_pos) + float(false_neg))
-    fpr = float(false_pos)/(float(false_pos) + float(true_neg))
-
-    return tpr,fpr
-
-def missclass_error_rate(y_true,y_pred):
-    """
-    Computes the missclassification error rate. y_true must be either +1 or -1
-    In: y_true (Nx1): Training values
-        y_pred (Nx1): Predicted values
-    Out: Missclassification error rate
-    """
-
-    missclass = np.ones((y_true.shape[0],1))
-    missclass[np.where(np.ravel(y_true) == np.ravel(y_pred))[0]] = 0
-
-    miss_rate = np.sum(missclass)/y_true.shape[0]
-
-    return miss_rate
 
 def knn_impute(A,M,K=10,nb_rand_ratio = 0.1):
     """
@@ -365,10 +332,8 @@ def isolate_missing(x,offend):
     ok_rows = np.array([])
     ok_cols = np.array([])
 
-    import pdb; pdb.set_trace()
     offend_mat = findOffending(x,offend)
 
-    import pdb; pdb.set_trace()
     #Replace offending values by NaN
     i_offend, j_offend = np.where(offend_mat)
     x[i_offend,j_offend] = np.nan
@@ -392,7 +357,6 @@ def isolate_missing(x,offend):
     B = x[b_grid]
     C = x[c_grid]
 
-    import pdb; pdb.set_trace()
     new_rows = np.concatenate((ok_rows.astype(int),offending_rows.astype(int)))
     new_cols = np.concatenate((ok_cols.astype(int),offending_cols.astype(int)))
 
@@ -425,6 +389,15 @@ def imputer(x,offend,mode):
 
     return x
 
+def balance_classes(x,y):
+    pos_idx = np.where(y == 1)[0]
+    neg_idx = np.where(y == -1)[0]
 
+    if(pos_idx.shape[0] < neg_idx.shape[0]):
+        neg_idx = neg_idx[0:pos_idx.shape[0]]
+    else:
+        pos_idx = pos_idx[0:neg_idx.shape[0]]
 
+    all_idx = np.concatenate((neg_idx,pos_idx))
 
+    return x[all_idx,:], y[all_idx]

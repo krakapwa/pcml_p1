@@ -12,7 +12,7 @@ N = data.shape[0]
 
 data_knn = np.load('train_knn.npz')
 x_knn = data_knn['x_knn']
-y_knn = data_knn['y_knn']
+y_knn = data_knn['y_A']
 
 data_knn_test = np.load('test_knn.npz')
 x_knn_test = data_knn_test['x_knn']
@@ -71,13 +71,14 @@ y_tilda = np.sign(z)
 tpr,fpr = tb.binary_tpr_fpr(y_train,y_tilda)
 print("TPR/FPR:", tpr, "/", fpr)
 
-nb_iters = 300
+nb_iters = 500
 
 #PCA
 F = bst.train_adaboost(y_A,x_proj,nb_iters)
 y_tilda =  bst.predict(F,x_proj)
 tpr,fpr = tb.binary_tpr_fpr(y_A,y_tilda)
 error_rate = tb.missclass_error_rate(y_A,y_tilda)
+
 print("TPR/FPR/error_rate:", tpr, "/", fpr, "/", error_rate)
 
 #Missing values replaced with mean
@@ -87,12 +88,28 @@ tpr,fpr = tb.binary_tpr_fpr(y,y_tilda)
 error_rate = tb.missclass_error_rate(y,y_tilda)
 print("TPR/FPR/error_rate:", tpr, "/", fpr, "/", error_rate)
 
-#Missing values replaced with mean
-F = bst.train_adaboost(y,x_mean_imp,nb_iters)
-y_tilda =  bst.predict(F,x_mean_imp)
-tpr,fpr = tb.binary_tpr_fpr(y,y_tilda)
+mod1 = bst.Adaboost(x_knn,y_knn,200)
+mod1.set_K(10)
+
+tpr,fpr,miss_rate = mod1.k_fold_cross_validation()
+
+mean_miss_rate = np.mean(miss_rate,axis=0)
+std_miss_rate = np.std(miss_rate,axis=0)
+plt.plot(mean_miss_rate);
+plt.plot(mean_miss_rate+std_miss_rate,'k');
+plt.plot(mean_miss_rate-std_miss_rate,'k');
+plt.title('K-fold cross-validation.')
+plt.xlabel('Num. of iterations')
+plt.ylabel('Missclassification rate')
+plt.show()
+
+F = mod1.train(y_knn,x_knn,nb_iters)
+y_tilda =  bst.predict(F,x_knn)
+tpr,fpr = tb.binary_tpr_fpr(y_knn,y_tilda)
 error_rate = tb.missclass_error_rate(y,y_tilda)
 print("TPR/FPR/error_rate:", tpr, "/", fpr, "/", error_rate)
+y_pred_test = bst.predict_adaboost(F,x_knn_test)
+hp.write_submission_higgs(y_pred_test,id_knn_test,"../submission6.csv")
 
 #Missing values replaced with K-Nearest-Neighbors Logitboost
 F = bst.train_logitboost(y_knn,x_knn,nb_iters)
@@ -101,48 +118,20 @@ tpr,fpr = tb.binary_tpr_fpr(y_knn,y_tilda)
 error_rate = tb.missclass_error_rate(y_knn,y_tilda)
 print("TPR/FPR/error_rate:", tpr, "/", fpr, "/", error_rate)
 y_pred_test = bst.predict_logitboost(F,x_knn_test)
-hp.write_submission_higgs(y_pred_test,id_knn_test,"../submission3.csv")
+hp.write_submission_higgs(y_pred_test,id_knn_test,"../submission4.csv")
 
 #Missing values replaced with K-Nearest-Neighbors
+#x_knn_bal,y_knn_bal = tb.balance_classes(x_knn,y_knn)
+#x_knn_bal,_,_ = hp.standardize(x_knn_bal)
+#x_knn_pca,_ = tb.pca(x_knn_bal,30)
 F = bst.train_adaboost(y_knn,x_knn,nb_iters)
 y_tilda =  bst.predict_adaboost(F,x_knn)
 tpr,fpr = tb.binary_tpr_fpr(y_knn,y_tilda)
 error_rate = tb.missclass_error_rate(y_knn,y_tilda)
 print("TPR/FPR/error_rate:", tpr, "/", fpr, "/", error_rate)
 y_pred_test = bst.predict_adaboost(F,x_knn_test)
-hp.write_submission_higgs(y_pred_test,id_knn_test,"../submission3.csv")
-
-#Missing values replaced with K-Nearest-Neighbors, x_miss attribute added
-F = bst.train_adaboost(y_knn,x_knn_aug,nb_iters)
-f = [F[i]['stump']['feat'] for i in range(len(F))]
-y_tilda =  bst.predict(F,x_knn_aug)
-tpr,fpr = tb.binary_tpr_fpr(y_knn,y_tilda)
-error_rate = tb.missclass_error_rate(y_knn,y_tilda)
-print("TPR/FPR/error_rate:", tpr, "/", fpr, "/", error_rate)
-
-#Only "good" samples (without missing values)
-y_clean = y_A[0:x_A.shape[0]]
-F = bst.train_adaboost(y_clean,x_A,nb_iters)
-y_tilda =  bst.predict(F,x_A)
-tpr,fpr = tb.binary_tpr_fpr(y_clean,y_tilda)
-error_rate = tb.missclass_error_rate(y_clean,y_tilda)
-print("TPR/FPR/error_rate:", tpr, "/", fpr, "/", error_rate)
+hp.write_submission_higgs(y_pred_test,id_knn_test,"../submission6.csv")
 
 y_pred_test = bst.predict(F,x_test)
 hp.write_submission_higgs(y_pred_test,id_test,"../submission.csv")
 
-#Only "good" columns (without missing values)
-F = bst.train_adaboost(y_knn,x_good_cols,nb_iters)
-y_tilda =  bst.predict(F,x_A)
-tpr,fpr = tb.binary_tpr_fpr(y_A,y_tilda)
-error_rate = tb.missclass_error_rate(y_A,y_tilda)
-print("TPR/FPR/error_rate:", tpr, "/", fpr, "/", error_rate)
-
-#Only "good" columns (without missing values), x_miss attribute added
-nb_iters = 120
-F = bst.train_adaboost(y_knn,x_good_cols_aug,nb_iters)
-f = [F[i]['stump']['feat'] for i in range(len(F))]
-y_tilda =  bst.predict(F,x_A)
-tpr,fpr = tb.binary_tpr_fpr(y_A,y_tilda)
-error_rate = tb.missclass_error_rate(y_A,y_tilda)
-print("TPR/FPR/error_rate:", tpr, "/", fpr, "/", error_rate)
