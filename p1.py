@@ -103,15 +103,24 @@ data_out_cv['nb_iters'] = nb_iters
 data_out_cv['K'] = K_cv
 np.savez('../cv10_adaboost.npz',**data_out_cv)
 
+data_ada_cv10 = np.load('../cv10_adaboost.npz')
+tpr = data_ada_cv10['tpr']
+fpr = data_ada_cv10['fpr']
+miss_rate = data_ada_cv10['miss_rate']
+nb_iters = data_ada_cv10['nb_iters']
 mean_miss_rate = np.mean(miss_rate,axis=0)
 std_miss_rate = np.std(miss_rate,axis=0)
+
 plt.plot(mean_miss_rate);
 plt.plot(mean_miss_rate+std_miss_rate,'b--');
 plt.plot(mean_miss_rate-std_miss_rate,'b--');
 plt.title('K-fold cross-validation.')
 plt.xlabel('Num. of iterations')
 plt.ylabel('Missclassification rate')
+fig = plt.gcf()
+fig.savefig('ada_cv10.eps', format='eps', dpi=1200)
 plt.show()
+plt.close()
 
 F = mod1.train(y_knn,x_knn,nb_iters)
 y_tilda =  bst.predict(F,x_knn)

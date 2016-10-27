@@ -1,0 +1,12 @@
+def balance_classes(x,y):
+    pos_idx = np.where(y == -1)[0]
+    neg_idx = np.where(y == 1)[0]
+
+    if(pos_idx.shape[0] < neg_idx.shap[0]):
+        neg_idx = neg_idx[0:pos_idx.shape[0]]
+    else:
+        pos_idx = pos_idx[0:neg_idx.shape[0]]
+
+    all_idx = np.concatenate((neg_idx,pos_idx))
+
+    return x[all_idx,:], y[all_idx,:]
