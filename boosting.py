@@ -30,8 +30,8 @@ class BinaryClassifier(ABC):
         thr_val: Value of threshold
         mode = {'leq',gt}
         """
-        out = -np.ones((x.shape[0],1))
-        nan_ind = np.where(np.isnan(x[:,dim]))[0]
+        out = -np.ones((x.shape[0],1)) #Initialize to negative class
+        nan_ind = np.where(np.isnan(x[:,dim]))[0] #If there's any NaN, give it to class "0"
         if(mode == 'leq'):
             out[x[:,dim] <= thr_val] = 1.0
         elif(mode == 'gt'):
@@ -98,13 +98,14 @@ class Adaboost(BinaryClassifier):
         fpr = np.array([])
         miss_rate = np.array([])
 
-        idx = np.arange(0,self.x.shape[0],dtype=int) #Indices to shuffle
+        idx = np.arange(0,self.x.shape[0],dtype=int) #Indices to shuffle (not necessary...)
 
         np.random.shuffle(idx)
-        folds_idx = np.split(idx, self.K)
-        test_folds_idx = np.zeros((folds_idx[0].shape[0],self.K),dtype=int)
+        folds_idx = np.split(idx, self.K) #Returns list of indices of the K folds
+        test_folds_idx = np.zeros((folds_idx[0].shape[0],self.K),dtype=int) 
         train_folds_idx = list()
 
+        #Build list of indices for test and train folds
         for i in range(self.K):
             test_folds_idx[:,i] = folds_idx[i].astype(int)
             train_folds_idx.append([])
@@ -137,7 +138,7 @@ class Adaboost(BinaryClassifier):
 
     def make_stump(self,y,x,w,sorted_idx):
         """
-        Makes decision stumps (depth-1) using weights w, splitting samples in nb_steps ranges
+        Makes decision stumps (depth=1) using weights w, splitting samples in nb_steps ranges
         y [Nx1]: Ground-truth
         x [NxD]: Training samples
         w [Nx1]: Weights
@@ -151,9 +152,9 @@ class Adaboost(BinaryClassifier):
         stump = {}
 
         for i in range(D): #Loop over features
-            this_col = x[:,i]
+            this_col = x[:,i] #This column will be "looked" for best stump
             #sorted_ind = np.argsort(this_col)
-            y_sorted = (y[sorted_idx[i]] + 1)/2
+            y_sorted = (y[sorted_idx[i]] + 1)/2 #Shift to {0,1}
 
             #lower or equal as positive class, the rest as negative. We only multiply weights of missclassified, hence negative class in this case
             cumsum_leq = np.cumsum(w[sorted_idx[i]]*np.invert(y_sorted.astype(bool)))
@@ -168,10 +169,10 @@ class Adaboost(BinaryClassifier):
             diff_x = np.diff(this_col[sorted_idx[i]])
             diff_x = np.insert(diff_x,0,1.)
             forbid_split = diff_x == 0
-
             leq_error[forbid_split] = np.inf
             gt_error[forbid_split] = np.inf
 
+            #Get minimum of weighted error for both polarities and choose minimum
             ind_min_leq = np.argmin(leq_error)
             ind_min_gt = np.argmin(gt_error)
 
@@ -185,6 +186,7 @@ class Adaboost(BinaryClassifier):
                 this_thr = this_col[sorted_idx[i][ind_min_gt]]
                 this_mode = 'gt'
 
+            #Compute prediction and missclassification error
             pred_vals = self.thr_classify(x,i,this_thr,mode=this_mode)
             missclassified = np.ones((N,1))
             missclassified[np.where(np.ravel(pred_vals) == np.ravel(y))[0]] = 0
@@ -225,6 +227,8 @@ class Adaboost(BinaryClassifier):
         w = list()
         F = list()
         init_classifier = {}
+
+        #Initialize weights. By default, all weights are equal and sum up to 1
         this_weights = np.ones((x.shape[0],1))
         if lambda_ is not None:
             pos_idx = np.where(y == 1)[0]
@@ -250,6 +254,7 @@ class Adaboost(BinaryClassifier):
             loss.shape = (loss.shape[0],1)
             F[i]['alpha'] = alpha
 
+            #This is to display current missclassification error
             overall_best += F[i]['alpha']*best_pred
             missclassified = np.ones((x.shape[0],1))
             missclassified[np.where(np.ravel(np.sign(overall_best)) == np.ravel(y))[0]] = 0
@@ -267,16 +272,24 @@ class Adaboost(BinaryClassifier):
         return F
 
     def predict(self,F,x):
-
+        """
+        Computes prediction of x based on list of classifiers F (obtained by function train)
+        x [NxD]: Training samples
+        F: List of weak-learner. Applied from 0 to len(F)
+        """
         pred = np.zeros((x.shape[0],1))
 
         for i in range(len(F)):
+            #Extract parameters of current stage (alpha, feature, mode)
             this_stump = F[i]['stump']
             this_alpha = F[i]['alpha']
             this_feat = this_stump['feat']
             this_thr = this_stump['thr']
             this_mode = this_stump['mode']
+
             this_pred = this_alpha*self.thr_classify(x,this_feat,this_thr,mode=this_mode)
+
+            #Add to last prediction
             pred += this_pred
 
         return np.sign(pred)

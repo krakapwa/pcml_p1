@@ -68,12 +68,10 @@ A very simple version of AdaBoost, named Discrete Adaboost, was implemented foll
 A 10-fold cross-validation is performed on our methods. In the case of Adaboost, the model complexity is given by the number of stages (or number of iterations). As for linear least-squares and logistic regressions, the regularization coefficient $\lambda$ expresses the smoothness constraint.
 As metric, the missclassification rate is used.
 
-
 #+CAPTION: Missclassification rate with respect to number of stages. 10-fold cross-validation 
 #+ATTR_LaTeX: [h]{0.2\textwidth} :width 0.58\textwidth
 #+LABEL: fig:minCost
 [[file:pics/ada_cv10.eps]]
-
 
 \bibliographystyle{ieeetr}
 \bibliography{refs}

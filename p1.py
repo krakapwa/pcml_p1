@@ -128,7 +128,7 @@ tpr,fpr = tb.binary_tpr_fpr(y_knn,y_tilda)
 error_rate = tb.missclass_error_rate(y,y_tilda)
 print("TPR/FPR/error_rate:", tpr, "/", fpr, "/", error_rate)
 y_pred_test = bst.predict_adaboost(F,x_knn_test)
-hp.write_submission_higgs(y_pred_test,id_knn_test,"../submission6.csv")
+hp.write_submission_higgs(y_pred_test,id_knn_test,"../submission7.csv")
 
 #Missing values replaced with K-Nearest-Neighbors Logitboost
 F = bst.train_logitboost(y_knn,x_knn,nb_iters)
