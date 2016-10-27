@@ -1,4 +1,4 @@
-% Created 2016-10-27 Thu 11:23
+% Created 2016-10-27 Thu 11:53
 \documentclass[10pt,conference,compsocconf]{IEEEtran}
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
@@ -24,10 +24,10 @@
 \documentclass[10pt,conference,compsocconf]{IEEEtran}
 \author{Laurent Lejeune, Tatiana Fountoukidou, Guillaume de Montauzon}
 \date{\today}
-\title{A boosting approach to the Higgs Boson classification challenge}
+\title{Group 97: A boosting approach to the Higgs Boson classification challenge}
 \hypersetup{
  pdfauthor={Laurent Lejeune, Tatiana Fountoukidou, Guillaume de Montauzon},
- pdftitle={A boosting approach to the Higgs Boson classification challenge},
+ pdftitle={Group 97: A boosting approach to the Higgs Boson classification challenge},
  pdfkeywords={},
  pdfsubject={},
  pdfcreator={Emacs 25.1.1 (Org mode 8.3.6)}, 
@@ -77,7 +77,7 @@ Both linear least-squares and logistic regression were implemented and tested. T
 
 \subsection{AdaBoost with decision stumps}
 \label{sec:orgheadline9}
-The idea of adding weak learners in a stage-wise manner to produce a strong classifier is commonly referred to as boosting. Discrete AdaBoost, described in \cite{friedman98}, consists in adapting the weights of training samples based on the missclassification error. The goal is to penalize missclassified samples and updated the weights for the computation of the next stage.
+The idea of adding weak learners (learner that predict slightly better than random guessing) in a stage-wise manner to produce a strong classifier is commonly referred to as boosting. Discrete AdaBoost, described in \cite{friedman98}, consists in adapting the weights of training samples based on the missclassification error. The goal is to penalize missclassified samples and updated the weights for the computation of the next stage.
 The exponential loss, written \(e^{-\bm{y}_i \alpha_t \bm{h}_t(x)}\), takes values higher than 1 (weight is increased) when the response \(h_t(x_i)\) (stage \(t\) on sample \(x_i\)) has an opposite sign as the ground-truth \(y_i\). Conversely, when the classification is correct (signs are the same), the weight is decreased.
 
 \begin{algorithm}
@@ -103,7 +103,6 @@ A very simple version of AdaBoost, named Discrete Adaboost, was implemented foll
 \label{sec:orgheadline11}
 A 10-fold cross-validation is performed on our methods. In the case of Adaboost, the model complexity is given by the number of stages (or number of iterations). As for linear least-squares and logistic regressions, the regularization coefficient \(\lambda\) expresses the smoothness constraint.
 As metric, the missclassification rate is used.
-
 
 \bibliographystyle{ieeetr}
 \bibliography{refs}

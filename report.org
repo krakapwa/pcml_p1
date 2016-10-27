@@ -13,7 +13,7 @@
 # org-ref-default-bibliography: refs.bib
 # End:
 #
-#+TITLE: A boosting approach to the Higgs Boson classification challenge
+#+TITLE: Group 97: A boosting approach to the Higgs Boson classification challenge
 #+AUTHOR: Laurent Lejeune, Tatiana Fountoukidou, Guillaume de Montauzon
 #+OPTIONS: toc:nil        no default TOC at all
 * Introduction 
@@ -42,7 +42,7 @@ Both linear least-squares and logistic regression were implemented and tested. T
 ** Linear Least-squares regression
 
 ** AdaBoost with decision stumps
-The idea of adding weak learners in a stage-wise manner to produce a strong classifier is commonly referred to as boosting. Discrete AdaBoost, described in cite:friedman98, consists in adapting the weights of training samples based on the missclassification error. The goal is to penalize missclassified samples and updated the weights for the computation of the next stage.
+The idea of adding weak learners (learner that predict slightly better than random guessing) in a stage-wise manner to produce a strong classifier is commonly referred to as boosting. Discrete AdaBoost, described in cite:friedman98, consists in adapting the weights of training samples based on the missclassification error. The goal is to penalize missclassified samples and updated the weights for the computation of the next stage.
 The exponential loss, written $e^{-\bm{y}_i \alpha_t \bm{h}_t(x)}$, takes values higher than 1 (weight is increased) when the response $h_t(x_i)$ (stage $t$ on sample $x_i$) has an opposite sign as the ground-truth $y_i$. Conversely, when the classification is correct (signs are the same), the weight is decreased.
 
 \begin{algorithm}
