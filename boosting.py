@@ -113,25 +113,25 @@ class Adaboost(BinaryClassifier):
                 if(j!=i):
                     train_folds_idx[i] = np.append(train_folds_idx[i],folds_idx[j].astype(int))
 
+        fpr = np.zeros((self.K,self.nb_iters))
+        tpr = np.zeros((self.K,self.nb_iters))
+        miss_rate = np.zeros((self.K,self.nb_iters))
+
+        print("Computing ", self.K, "fold cross-validation")
         for i in range(len(folds_idx)):
-            print("Starting ", self.K, "-fold cross-validation")
-            print("K = ", i)
+            print("K = ", i+1)
             this_F = self.train(self.y[train_folds_idx[i]],self.x[train_folds_idx[i],:],self.nb_iters,do_print=False)
-            F.append(this_F)
-
-        fpr = np.zeros((self.K-1,self.nb_iters))
-        tpr = np.zeros((self.K-1,self.nb_iters))
-        miss_rate = np.zeros((self.K-1,self.nb_iters))
-
-        import pdb; pdb.set_trace()
-        for i in range(self.K):
+            print("Predicting")
             for j in range(self.nb_iters):
-                pred.append(self.predict(F[i][0:j+1],self.x[test_folds_idx[i],:]))
-                this_tpr,this_fpr = self.binary_tpr_fpr(self.y[test_folds_idx[i]],pred[-1])
-                this_miss_rate = self.missclass_error_rate(self.y[test_folds_idx[i]],pred[-1])
+                print(str(j), "iterations")
+                this_pred = self.predict(this_F[0:j+1],self.x[test_folds_idx[:,i],:])
+                this_tpr,this_fpr = self.binary_tpr_fpr(self.y[test_folds_idx[:,i]],this_pred)
+                this_miss_rate = self.missclass_error_rate(self.y[test_folds_idx[:,i]],this_pred)
                 fpr[i,j] = this_fpr
                 tpr[i,j] = this_tpr
                 miss_rate[i,j] = this_miss_rate
+
+        print("Done.")
 
         return tpr,fpr,miss_rate
 

@@ -10,11 +10,11 @@ data_test,_,id_test = hp.load_data_higgs('../test.csv')
 
 N = data.shape[0]
 
-data_knn = np.load('train_knn.npz')
+data_knn = np.load('../train_knn.npz')
 x_knn = data_knn['x_knn']
 y_knn = data_knn['y_A']
 
-data_knn_test = np.load('test_knn.npz')
+data_knn_test = np.load('../test_knn.npz')
 x_knn_test = data_knn_test['x_knn']
 id_knn_test = data_knn_test['id_']
 
@@ -61,6 +61,7 @@ x_knn_aug = np.concatenate((x_miss, x_knn),axis=1)
 x_good_cols_aug = np.concatenate((x_miss,x_good_cols),axis=1)
 
 x_pca,eig_pairs = pca(x_A,nb_dims)
+    import pdb; pdb.set_trace()
 
 w_estim = tb.least_squares_inv_ridge(y_train,x_proj,1)
 w_estim = tb.least_squares_SGD(y_train,x_proj,0.00001,500,B=100,init_guess=w_estim)
@@ -71,7 +72,7 @@ y_tilda = np.sign(z)
 tpr,fpr = tb.binary_tpr_fpr(y_train,y_tilda)
 print("TPR/FPR:", tpr, "/", fpr)
 
-nb_iters = 500
+nb_iters = 1000
 
 #PCA
 F = bst.train_adaboost(y_A,x_proj,nb_iters)
@@ -88,16 +89,25 @@ tpr,fpr = tb.binary_tpr_fpr(y,y_tilda)
 error_rate = tb.missclass_error_rate(y,y_tilda)
 print("TPR/FPR/error_rate:", tpr, "/", fpr, "/", error_rate)
 
-mod1 = bst.Adaboost(x_knn,y_knn,200)
-mod1.set_K(10)
+mod1 = bst.Adaboost(x_knn,y_knn,nb_iters)
+K_cv = 10
+mod1.set_K(K_cv)
 
 tpr,fpr,miss_rate = mod1.k_fold_cross_validation()
+
+data_out_cv = dict()
+data_out_cv['tpr'] = tpr
+data_out_cv['fpr'] = fpr
+data_out_cv['miss_rate'] = miss_rate
+data_out_cv['nb_iters'] = nb_iters
+data_out_cv['K'] = K_cv
+np.savez('../cv10_adaboost.npz',**data_out_cv)
 
 mean_miss_rate = np.mean(miss_rate,axis=0)
 std_miss_rate = np.std(miss_rate,axis=0)
 plt.plot(mean_miss_rate);
-plt.plot(mean_miss_rate+std_miss_rate,'k');
-plt.plot(mean_miss_rate-std_miss_rate,'k');
+plt.plot(mean_miss_rate+std_miss_rate,'b--');
+plt.plot(mean_miss_rate-std_miss_rate,'b--');
 plt.title('K-fold cross-validation.')
 plt.xlabel('Num. of iterations')
 plt.ylabel('Missclassification rate')
