@@ -72,7 +72,7 @@ y_tilda = np.sign(z)
 tpr,fpr = tb.binary_tpr_fpr(y_train,y_tilda)
 print("TPR/FPR:", tpr, "/", fpr)
 
-nb_iters = 1000
+nb_iters = 2000
 
 #PCA
 F = bst.train_adaboost(y_A,x_proj,nb_iters)
@@ -123,11 +123,11 @@ plt.show()
 plt.close()
 
 F = mod1.train(y_knn,x_knn,nb_iters)
-y_tilda =  bst.predict(F,x_knn)
-tpr,fpr = tb.binary_tpr_fpr(y_knn,y_tilda)
-error_rate = tb.missclass_error_rate(y,y_tilda)
+y_tilda =  mod1.predict(F,x_knn)
+tpr,fpr = mod1.binary_tpr_fpr(y_knn,y_tilda)
+error_rate = mod1.missclass_error_rate(y_knn,y_tilda)
 print("TPR/FPR/error_rate:", tpr, "/", fpr, "/", error_rate)
-y_pred_test = bst.predict_adaboost(F,x_knn_test)
+y_pred_test = mod1.predict(F,x_knn_test)
 hp.write_submission_higgs(y_pred_test,id_knn_test,"../submission7.csv")
 
 #Missing values replaced with K-Nearest-Neighbors Logitboost

@@ -111,7 +111,6 @@ def least_squares_SGD(y,x,gamma,max_iters,B=1,init_guess = None):
     if(init_guess is None):
         init_guess = np.zeros((x.shape[1],1))
 
-
     N = x.shape[0]
     w = list()
     w = init_guess
